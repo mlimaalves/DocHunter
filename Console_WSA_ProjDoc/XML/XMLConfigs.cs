@@ -9,37 +9,35 @@
             // Controle do Dicionário dinâmico:
             public System.Collections.Generic.List<string[]> Dictionary { get; set; }
 
-            // Variáveis gerais, compartilhadas entre todos os projetos:
-            public int Projects { get; set; } = XmlOperations.GetProjectCount("projeto");
+            // Variáveis gerais, compartilhadas entre todos os projects:
+            public int Projects { get; set; } = XmlOperations.GetProjectCount("project");
             public string XmlFileName { get; set; } = XmlOperations.XmlFileName;
             public string AssemblyFolder { get; set; } = XmlOperations.AssemblyFolder;
 
             public string ServiceName { get; set; } =
-                XmlOperations.GetXmlElements("/configuracoes/service/servicename");
+                XmlOperations.GetXmlElements("/configurations/service/servicename");
 
             public string DisplayName { get; set; } =
-                XmlOperations.GetXmlElements("/configuracoes/service/displayname");
+                XmlOperations.GetXmlElements("/configurations/service/displayname");
 
             public string ServiceDescription { get; set; } =
-                XmlOperations.GetXmlElements("/configuracoes/service/servicedescription");
+                XmlOperations.GetXmlElements("/configurations/service/servicedescription");
 
-            // Variáveis específicas para projetos do tipo Local:
-            public string LocalFolder { get; set; }
-
-            // Variáveis específicas para projetos do tipo TFS:
+            // Variáveis específicas para projects do tipo TFS:
             public string TfsServerUrl { get; set; }
-            public string TfsProject { get; set; }
-            public string TfsFolder { get; set; }
+            public string TfsProjectName { get; set; }
             public string TfsUsername { get; set; }
             public string TfsPassword { get; set; }
-
             public string TfsChangesets { get; set; }
 
             //
-            public string ProjectName { get; set; }
+            public string ProjectTitle { get; set; }
             public string HtmlFolder { get; set; }
+            public string LocalFolder { get; set; }
             public string DeleteFiles { get; set; }
+            public string CallIndex { get; set; }
             public string Language { get; set; }
+            public string Extension { get; set; }
             //
 
             public string GetProjectType(int nId)
@@ -49,44 +47,59 @@
 
             public void GetTfsElements(int nId)
             {
-                ProjectName =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/name", true);
+                ProjectTitle =
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/title", true);
                 TfsServerUrl =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/serverurl", true);
-                TfsProject =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/project", true);
-                TfsFolder =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/tfsfolder", true).ToLower();
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/serverurl", true);
+                TfsProjectName =
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/name", true);
                 TfsUsername =
                     XmlOperations.GetXmlElements(
-                        "/configuracoes/projetos/projeto[@nId='" + nId + "']/networkcredential/username", true);
+                        "/configurations/projects/project[@nId='" + nId + "']/networkcredential/username", true);
                 TfsPassword =
                     XmlOperations.GetXmlElements(
-                        "/configuracoes/projetos/projeto[@nId='" + nId + "']/networkcredential/password", true);
+                        "/configurations/projects/project[@nId='" + nId + "']/networkcredential/password", true);
                 TfsChangesets =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/changesets");
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/changesets").ToLower();
                 //
                 HtmlFolder =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/html/htmlfolder",
-                        true).ToLower();
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/html/htmlfolder", true).ToLower();
+                HtmlFolder = (HtmlFolder.Substring(HtmlFolder.Length - 1) == @"\") ? HtmlFolder : HtmlFolder + @"\";
+                LocalFolder =
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/localfolder", true).ToLower();
+                LocalFolder = (LocalFolder.Substring(LocalFolder.Length - 1) == @"\") ? LocalFolder : LocalFolder + @"\";
                 DeleteFiles =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/deletefiles");
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/deletefiles").ToLower();
+                DeleteFiles = (DeleteFiles == null) ? "false" : DeleteFiles;
+                CallIndex =
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/callindex").ToLower();
+                CallIndex = (CallIndex == null) ? "false" : CallIndex;
                 Language =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/language",true).ToLower();
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/language", true).ToLower();
+                Extension =
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/extension", true).ToLower();
             }
 
             public void GetLocalElements(int nId)
             {
-                ProjectName =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/name", true);
-                LocalFolder =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/localfolder",true);
+                ProjectTitle =
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/title", true);
                 HtmlFolder =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/html/htmlfolder",true);
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/html/htmlfolder",true).ToLower();
+                HtmlFolder = (HtmlFolder.Substring(HtmlFolder.Length - 1) == @"\") ? HtmlFolder : HtmlFolder + @"\";
+                LocalFolder =
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/localfolder", true).ToLower();
+                LocalFolder = (LocalFolder.Substring(LocalFolder.Length - 1) == @"\") ? LocalFolder : LocalFolder + @"\";
                 DeleteFiles =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/deletefiles");
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/deletefiles").ToLower();
+                DeleteFiles = (DeleteFiles == null) ? "false" : DeleteFiles;
+                CallIndex =
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/callindex").ToLower();
+                CallIndex = (CallIndex == null) ? "true" : CallIndex;
                 Language =
-                    XmlOperations.GetXmlElements("/configuracoes/projetos/projeto[@nId='" + nId + "']/language",true).ToLower();
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/language",true).ToLower();
+                Extension =
+                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/extension", true).ToLower();
             }
             public void LoadDictionary() => Dictionary = XmlOperations.GetXmlDictionary(Language);
         }

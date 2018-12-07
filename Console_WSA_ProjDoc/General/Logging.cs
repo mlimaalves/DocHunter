@@ -20,7 +20,7 @@ namespace Console_WSA_ProjDoc.General
             {
                 if (carriage == false)
                 {
-                    texto = Environment.NewLine + "[Processo " + Process.GetCurrentProcess().Id.ToString() + "]" + date + texto;
+                    texto = Environment.NewLine + "[Process " + Process.GetCurrentProcess().Id.ToString() + "]" + date + texto;
                     if (!File.Exists(Logfile)) File.WriteAllText(Logfile, texto);
                     else File.AppendAllText(Logfile, texto);
                     Console.Write(texto);
@@ -31,6 +31,7 @@ namespace Console_WSA_ProjDoc.General
                     texto = date + texto;
                     fileContent[fileContent.Count - 1] = texto;
                     File.WriteAllLines(Logfile, fileContent);
+                    File.WriteAllText(Logfile, File.ReadAllText(Logfile).Substring(0, File.ReadAllText(Logfile).Length - 2));
 
                     // Limpar conteúdo da última linha do console:
                     int currentLineCursor = Console.CursorTop;

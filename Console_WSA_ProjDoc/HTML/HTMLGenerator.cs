@@ -29,18 +29,18 @@ namespace Console_WSA_ProjDoc.HTML
             var lret = false;
             try
             {
-                Logging.WriteLog("Iniciando a criação da documentação...");
+                Logging.WriteLog("Starting the HTML files creation...");
                 CreateDocumentation();
-                Logging.WriteLog("Documentação finalizada...");
+                Logging.WriteLog("HTML Files Creation Status: CONCLUDED.");
                 lret = true;
             }
             catch (IOException e)
             {
-                Logging.WriteLog("Erro de Input/Output.: \n" + e);
+                Logging.WriteLog("An I/O Exception occurred during the HTML files creation: \n" + e);
             }
             catch (Exception e)
             {
-                Logging.WriteLog("Exceção durante montagem de projeto HTML: \n" + e);
+                Logging.WriteLog("An Exception occurred during the HTML files creation: \n" + e);
             }
 
             if (!lret) Environment.Exit(0);
@@ -50,7 +50,7 @@ namespace Console_WSA_ProjDoc.HTML
         private bool CreateDocumentation()
         {
             const bool lRet = false;
-            var htmlFolder = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectName);
+            var htmlFolder = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectTitle);
             var file = "";
             var dir = new DirectoryInfo(htmlFolder);
             try
@@ -59,7 +59,7 @@ namespace Console_WSA_ProjDoc.HTML
             }
             catch (IOException e)
             {
-                Logging.WriteLog("Não foi possível excluir o diretório " + dir.FullName + ". Continuando execução");
+                Logging.WriteLog("ATTENTION: IT WAS NOT POSSIBLE TO EXCLUDE THE DIRECTORY: " + dir.FullName + ". THE PROCESS WILL CONTINUE.");
             }
             Directory.CreateDirectory(htmlFolder);
 
@@ -70,40 +70,40 @@ namespace Console_WSA_ProjDoc.HTML
             #endregion
 
             #region CRIANDO ÁRVORE DE PASTAS E ROTINAS PARA A NAVEGAÇÃO PRINCIPAL
-            Create_Tree(Xml.TfsFolder + @"\");
+            Create_Tree(Xml.LocalFolder);
             // Ajuste final na árvore:
             Tree = Tree.Replace(@"},]", @"}]").Replace(@"],}", @"]}");
             Tree = Tree.Substring(0, Tree.Length - 2);
             #endregion 
 
             #region CRIANDO ARQUIVO NAVIGATION PRINCIPAL (MAIN.HTML)
-            //Iniciando o projeto com o arquivo Main.Html
+            //Iniciando o project com o arquivo Main.Html
             file = htmlFolder + @"\main.html";
             CreateHTMLFile(file, "Navigation.html");
             Replace_TreeArea(file);
-            Replace_NameArea(file, Xml.ProjectName);
-            Replace_ButtonArea(Xml.TfsFolder, file);
+            Replace_NameArea(file, Xml.ProjectTitle);
+            Replace_ButtonArea(Xml.LocalFolder, file);
             Replace_FileProtocolArea(file);
             Replace_SearchArea(file);
             Replace_BreadcrumbArea(file, file);
             Replace_Dictionary(file);
 
-            Logging.WriteLog("Arquivo Main.html criado com sucesso. Iniciando a criação da estrutura de código-fonte...");
+            Logging.WriteLog("main.html file created successfully. Generating the " + Xml.Extension + " documentation.");
             #endregion
 
             #region CRIANDO ARQUIVOS CODE
-            var tfsFolder = new DirectoryInfo(Xml.TfsFolder);
-            var counter = tfsFolder.GetFiles("*.prw", SearchOption.AllDirectories).Length;
+            var tfsFolder = new DirectoryInfo(Xml.LocalFolder);
+            var counter = tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Length;
             var current = 0;
             var Indexed = false;
-            foreach (var codefile in tfsFolder.GetFiles("*.prw", SearchOption.AllDirectories)
+            foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories)
                 .Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
             {
                 current++;
-                Logging.WriteLog(current + " de " + counter + " arquivos processados.", true);
+                Logging.WriteLog(current + " of " + counter + " files processed.", true);
                 var originalfilename = codefile.FullName;
                 var newdirectory = WebUtility.HtmlEncode(codefile.Directory.FullName);
-                newdirectory = htmlFolder + HtmlFormatters.URLReplace(newdirectory.Replace(Xml.TfsFolder, ""));
+                newdirectory = htmlFolder + @"\" + HtmlFormatters.URLReplace(newdirectory.Replace(Xml.LocalFolder, ""));
                 Directory.CreateDirectory(newdirectory);
 
                 file = HtmlFormatters.URLReplace(codefile.Name) + ".html";
@@ -115,11 +115,11 @@ namespace Console_WSA_ProjDoc.HTML
                 FileStream fs = File.OpenRead(originalfilename);
                 result = sha.ComputeHash(fs);
                 var hash = "";
-                foreach(var line in result) hash += line.ToString();
+                foreach (var line in result) hash += line.ToString();
                 fs.Close();
-                if (!File.Exists(file) || FileHash.CompareHash(originalfilename, hash))
+                if (!File.Exists(file) || FileHash.CompareHash(originalfilename, hash, Xml.Extension))
                 {
-                    if (!Indexed)
+                    if (!Indexed && Xml.CallIndex == "true")
                     {
                         FunctionIndexer = new FunctionIndexer();
                         FunctionIndexer.LoadXml(Xml);
@@ -128,12 +128,11 @@ namespace Console_WSA_ProjDoc.HTML
                     }
 
                     CreateHTMLFile(file, "Code.html");
-                    Replace_NameArea(file, Xml.ProjectName);
+                    Replace_NameArea(file, Xml.ProjectTitle);
                     Replace_FileNameArea(file, codefile.Name);
                     Replace_FileProtocolArea(file);
                     Replace_SearchArea(file);
                     Replace_BreadcrumbArea(file, originalfilename);
-                    //Replace_ChangesetsArea(file, codefile.FullName);
                     RegExDocumentation(file, codefile.FullName);
                     RegExCode(file, codefile.FullName);
                     Replace_ChangesetsArea(file, codefile.FullName);
@@ -185,7 +184,6 @@ namespace Console_WSA_ProjDoc.HTML
                               "aria-controls='" + identifier + "'>" +
                               buttonText + "</button>" + Environment.NewLine;
 
-                //
                 #region Criando collapses para subpastas dentro do Button
                 buttonCollapseList += "					<div class='collapse'  id='" + identifier + "'>" + Environment.NewLine;
                 buttonCollapseList += "						<div class='card card-body'>" + Environment.NewLine;
@@ -205,7 +203,7 @@ namespace Console_WSA_ProjDoc.HTML
                                           "<i class='far fa-folder fa-custom'></i>" +
                                           subText + "</a></li>" + Environment.NewLine;
                 }
-                foreach (var subfiles in innerFolder.GetFiles("*.prw*", SearchOption.TopDirectoryOnly))
+                foreach (var subfiles in innerFolder.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly))
                 {
                     var subText = WebUtility.HtmlEncode(subfiles.Name);
 
@@ -227,7 +225,7 @@ namespace Console_WSA_ProjDoc.HTML
 
             #region loop em ARQUIVOS- Gera uma tag <a> para cada arquivo encontrado
 
-            foreach (var codefile in currentFolder.GetFiles("*.prw", SearchOption.TopDirectoryOnly)
+            foreach (var codefile in currentFolder.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
                 .Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
             {
                 var href = codefile.Name;
@@ -249,16 +247,15 @@ namespace Console_WSA_ProjDoc.HTML
         private void Replace_BreadcrumbArea(string file, string originalfilename)
         {
             var f = new FileInfo(originalfilename.ToLower());
-            //var replace = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectName);
-            var replace = (Xml.HtmlFolder + Xml.ProjectName).ToLower();
-            var breadcrumbfolders = f.FullName.Replace(replace, "").Replace(@"\main.html", "");
+            var replace = (Xml.LocalFolder).ToLower();
+            var breadcrumbfolders =@"\"+ f.FullName.Replace(replace, "").Replace(@"\main.html", "");
             var folderSplit = f.Name == "main.html" ? new String[1] : breadcrumbfolders.Split(Path.DirectorySeparatorChar);
             var breadcrumbText = "";
             int x;
             for (x = 0; x < folderSplit.Length; x++)
             {
                 if (folderSplit[x] == null) folderSplit[x] = "";
-                var currentpath = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectName);
+                var currentpath = HtmlFormatters.URLReplace(Xml.LocalFolder);
                 int y;
                 for (y = 0; y < x + 1; y++)
                 {
@@ -268,13 +265,13 @@ namespace Console_WSA_ProjDoc.HTML
                 if (f.Name != "main.html" && x == 0)
                 {
                     var goback = string.Concat(Enumerable.Repeat("../", folderSplit.Length - 2));
-                    var href = currentpath.Replace(HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectName + @"\"), "") +
+                    var href = currentpath.Replace(HtmlFormatters.URLReplace(Xml.LocalFolder), "") +
                                ((folderSplit[x] == "") ? "main" : folderSplit[x]);
                     href = goback + HtmlFormatters.URLReplace(href) + ".html";
                     breadcrumbText += "							<li " +
                                       "class='breadcrumb-item'>" +
                                       "<a href='" + href + "'>" +
-                                      ((folderSplit[x] == "") ? Xml.ProjectName : folderSplit[x].First().ToString().ToUpper() + folderSplit[x].Substring(1).ToLower()) +
+                                      ((folderSplit[x] == "") ? Xml.ProjectTitle : folderSplit[x].First().ToString().ToUpper() + folderSplit[x].Substring(1).ToLower()) +
                                       "</a></li>" +
                                       Environment.NewLine;
                 }
@@ -283,7 +280,7 @@ namespace Console_WSA_ProjDoc.HTML
                     breadcrumbText += "							<li " +
                                       "class='breadcrumb-item active' " +
                                       "aria-current='page'>" +
-                                      ((folderSplit[x] == "") ? Xml.ProjectName : folderSplit[x].First().ToString().ToUpper() + folderSplit[x].Substring(1).ToLower()) +
+                                      ((folderSplit[x] == "") ? Xml.ProjectTitle : folderSplit[x].First().ToString().ToUpper() + folderSplit[x].Substring(1).ToLower()) +
                                       "</li>" +
                                       Environment.NewLine;
                 }
@@ -294,7 +291,7 @@ namespace Console_WSA_ProjDoc.HTML
         private void Replace_ChangesetsArea(string file, string originalfilename)
         {
             var f = new FileInfo(originalfilename);
-            var csfile = f.Directory.FullName + @"\" + f.Name.Replace(".prw", "") + ".#cs";
+            var csfile = f.Directory.FullName + @"\" + f.Name.Replace(Xml.Extension, "") + ".#tfvc";
             var currcs = "";
             var csnav = "";
             DateTime currdatetime = DateTime.Now;
@@ -302,7 +299,7 @@ namespace Console_WSA_ProjDoc.HTML
             var search = csfile;
 
 
-            if (Xml.TfsChangesets == "show" && File.Exists(csfile))
+            if (Xml.TfsChangesets == "true" && File.Exists(csfile))
             {
                 csnav += "						<li class='nav-item'>" + Environment.NewLine;
                 csnav += "							<a class='nav-link' id='changesets-tab' data-toggle='tab' href='#changesets' role='tab' aria-controls='changesets' aria-selected='false'>&Dic:tab_changesets&</a>" + Environment.NewLine;
@@ -339,18 +336,18 @@ namespace Console_WSA_ProjDoc.HTML
                         currcs += "										<h6 " +
                             "class='custom-changeset-title' " +
                             "data-toggle='tooltip' " +
-                            "data-placement='bottom' title='&newTitle&'>" + Environment.NewLine+
+                            "data-placement='bottom' title='&newTitle&'>" + Environment.NewLine +
                             "&newComment&" + Environment.NewLine;
                         tempcomment = line.Replace("@Comment: ", "");
                         temptitle = tempcomment + Environment.NewLine;
                     }
                     else if (line.Contains("@Changeset:"))
                     {
-                        currcs =  currcs.Replace("&newTitle&", temptitle).Replace("&newComment&", tempcomment);
+                        currcs = currcs.Replace("&newTitle&", temptitle).Replace("&newComment&", tempcomment);
                         currcs += "										<div class='text-muted font-weight-normal'>" +
                             "Changeset " + line.Replace("@Changeset: ", "") + "</div>" + Environment.NewLine;
                         currcs += "										</h6>" + Environment.NewLine;
-                        currcs += "									</div>" + Environment.NewLine ; // fim changeset
+                        currcs += "									</div>" + Environment.NewLine; // fim changeset
 
                     }
                     else // continuação comentário
@@ -367,16 +364,16 @@ namespace Console_WSA_ProjDoc.HTML
 
         private void Replace_SearchArea(string file)
         {
-            var tfsFolder = new DirectoryInfo(Xml.TfsFolder);
+            var tfsFolder = new DirectoryInfo(Xml.LocalFolder);
             var searchList = "";
             var f = new FileInfo(file);
-            foreach (var codefile in tfsFolder.GetFiles("*.prw", SearchOption.AllDirectories).Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
+            foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
             {
-                var searchText = WebUtility.HtmlEncode(Xml.ProjectName + codefile.FullName.Replace(Xml.TfsFolder, ""));
-                var replace = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectName);
+                var searchText = WebUtility.HtmlEncode(Xml.ProjectTitle + codefile.FullName.Replace(Xml.LocalFolder, ""));
+                var replace = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectTitle);
                 string[] split = f.Directory.FullName.Replace(replace, "").Split(Path.DirectorySeparatorChar);
                 var goback = string.Concat(Enumerable.Repeat("../", split.Length - 1));
-                var href = codefile.FullName.Replace(Xml.TfsFolder + @"\", "");
+                var href = codefile.FullName.Replace(Xml.LocalFolder, "");
                 href = goback + HtmlFormatters.URLReplace(href) + ".html";
                 searchList += "			    	<li " +
                               "class='nav-item text-right'><a " +
@@ -391,7 +388,7 @@ namespace Console_WSA_ProjDoc.HTML
         private void Replace_FileProtocolArea(string file)
         {
             var f = new FileInfo(file);
-            var replace = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectName);
+            var replace = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectTitle);
             string[] split = f.Directory.FullName.Replace(replace, "").Split(Path.DirectorySeparatorChar);
             var goback = string.Concat(Enumerable.Repeat("../", split.Length - 1));
             File.WriteAllText(file, File.ReadAllText(file).Replace("&fileProtocolArea&", goback));
@@ -399,7 +396,7 @@ namespace Console_WSA_ProjDoc.HTML
 
         private void Replace_Dictionary(string file)
         {
-            foreach(string[] line in Xml.Dictionary)
+            foreach (string[] line in Xml.Dictionary)
             {
                 File.WriteAllText(file, File.ReadAllText(file).Replace("&Dic:" + line[0] + "&", line[1]));
             }
@@ -421,7 +418,7 @@ namespace Console_WSA_ProjDoc.HTML
             var linecounter = 0;
             foreach (var line in lines)
             {
-                newCode += "<tr><td class='codebox linenumber' id='"+(linecounter + 1) + "'>" + (linecounter + 1) +
+                newCode += "<tr><td class='codebox linenumber' id='" + (linecounter + 1) + "'>" + (linecounter + 1) +
                           "</td><td><pre>" + lines[linecounter] + "</pre></td></tr>";
                 linecounter++;
             }
@@ -595,36 +592,37 @@ namespace Console_WSA_ProjDoc.HTML
                 Replace_SyntaxArea(htmlfile, funtype + funcall);
             }
             #endregion
-            
+
             #region OBTER REFERÊNCIAS/CHAMADAS DAS USERFUNCTIONS EM OUTROS ARQUIVOS
             var cfunref = "";
-
-            foreach (FunctionIndexer.ProjectMapping f in FunctionIndexer._functionMatches.Where(x => x.FilePath.ToUpper() + x.FileName.ToUpper() == codefile.ToUpper()))
+            if (Xml.CallIndex == "true")
             {
-                if (f.FunctionType == "User Function")
+                foreach (FunctionIndexer.ProjectMapping f in FunctionIndexer._functionMatches.Where(x => x.FilePath.ToUpper() + x.FileName.ToUpper() == codefile.ToUpper()))
                 {
-                    foreach (FunctionIndexer.ProjectCalling c in FunctionIndexer._functionCalls.Where(x => x.FunctionName.ToUpper() == f.FunctionName.ToUpper()))
+                    if (f.FunctionType == "User Function")
                     {
-                        var currfiledir =
-                            new FileInfo(htmlfile).Directory.FullName.Replace(
-                                Xml.HtmlFolder + HtmlFormatters.URLReplace(Xml.ProjectName) + @"\", "");
-                        var folderSplit = currfiledir.Split(Path.DirectorySeparatorChar);
-                        var goback = string.Concat(Enumerable.Repeat("../", folderSplit.Length));
-                        var calldir = HtmlFormatters.URLReplace(c.FilePath.Replace(Xml.TfsFolder + @"\", "") + c.FileName)+".html";
-                            //htmlfile.Replace(Xml.HtmlFolder + HtmlFormatters.URLReplace(Xml.ProjectName) + @"\", "");
+                        foreach (FunctionIndexer.ProjectCalling c in FunctionIndexer._functionCalls.Where(x => x.FunctionName.ToUpper() == f.FunctionName.ToUpper()))
+                        {
+                            var currfiledir =
+                                new FileInfo(htmlfile).Directory.FullName.Replace(
+                                    Xml.HtmlFolder + HtmlFormatters.URLReplace(Xml.ProjectTitle) + @"\", "");
+                            var folderSplit = currfiledir.Split(Path.DirectorySeparatorChar);
+                            var goback = string.Concat(Enumerable.Repeat("../", folderSplit.Length));
+                            var calldir = HtmlFormatters.URLReplace(c.FilePath.Replace(Xml.LocalFolder, "") + c.FileName) + ".html";
 
-                        cfunref += "									<a " +
-                                  "class='card-text custom-card-text4' " +
-                                  "href='" + goback + calldir + "#" + c.LineNumber + "'>" +
-                                  c.FilePath.Replace(Xml.TfsFolder + @"\", "") + c.FileName + " => U_" + c.FunctionName + ", Linha " + c.LineNumber + "</a><br>" + Environment.NewLine;
+                            cfunref += "									<a " +
+                                      "class='card-text custom-card-text4' " +
+                                      "href='" + goback + calldir + "#" + c.LineNumber + "'>" +
+                                      c.FilePath.Replace(Xml.LocalFolder, "") + c.FileName + " => U_" + c.FunctionName + ", Linha " + c.LineNumber + "</a><br>" + Environment.NewLine;
 
+                        }
                     }
                 }
+                cfunref += "<p></p>";
             }
-            cfunref += "<p></p>";
             Replace_FunctionCallArea(htmlfile, cfunref);
             #endregion
-            
+
             Replace_ErrorArea(htmlfile);
         }
 
@@ -770,11 +768,11 @@ namespace Console_WSA_ProjDoc.HTML
                     else
                     {
                         Tree += ",nodes:[";
-                        foreach (var codefile in dInfo.GetFiles("*.prw", SearchOption.TopDirectoryOnly)
+                        foreach (var codefile in dInfo.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
                             .Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
                         {
-                            var href = codefile.FullName.Replace(Xml.TfsFolder, "");
-                            href = "." + HtmlFormatters.URLReplace(href) + ".html";
+                            var href = codefile.FullName.Replace(Xml.LocalFolder, "");
+                            href = @".\" + HtmlFormatters.URLReplace(href) + ".html";
                             Tree += "{";
                             Tree += "text:'" + codefile.Name + "',";
                             Tree += "icon:'far fa-file',";
@@ -783,11 +781,11 @@ namespace Console_WSA_ProjDoc.HTML
                         Tree += "]},";
                     }
                 }
-                foreach (var codefile in folder.GetFiles("*.prw", SearchOption.TopDirectoryOnly)
+                foreach (var codefile in folder.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
                     .Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
                 {
-                    var href = codefile.FullName.Replace(Xml.TfsFolder, "");
-                    href = "." + HtmlFormatters.URLReplace(href) + ".html";
+                    var href = codefile.FullName.Replace(Xml.LocalFolder, "");
+                    href = @".\" + HtmlFormatters.URLReplace(href) + ".html";
                     Tree += "{";
                     Tree += "text:'" + codefile.Name + "',";
                     Tree += "icon:'far fa-file',";

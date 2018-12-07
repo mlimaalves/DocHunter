@@ -25,7 +25,7 @@ namespace Console_WSA_ProjDoc
         public void LoadXml(XmlConfigs.Xml xml)
         {
             this.Xml = xml;
-            _d = new DirectoryInfo(xml.TfsFolder);
+            _d = new DirectoryInfo(xml.LocalFolder);
         }
 
         public bool FunctionMapping()
@@ -36,15 +36,15 @@ namespace Console_WSA_ProjDoc
             try
             {
                 #region Leitura de todos os arquivos do Projeto
-                Logging.WriteLog("Iniciando a indexação de User Functions...");
+                Logging.WriteLog("Starting the function call indexing...");
                 Logging.WriteLog("");
 
-                var counter = _d.GetFiles("*.prw", SearchOption.AllDirectories).Length;
+                var counter = _d.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Length;
                 var current = 0;
-                foreach (var file in _d.GetFiles("*.prw", SearchOption.AllDirectories).Where(d => !d.FullName.ToString().Contains("$")))
+                foreach (var file in _d.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Where(d => !d.FullName.ToString().Contains("$")))
                 {
                     current++;
-                    Logging.WriteLog(current + " de " + counter + " arquivos indexados.", true);
+                    Logging.WriteLog(current + " of " + counter + " files indexed.", true);
                     var fullcode = ReplaceComments(File.ReadAllText(file.FullName)); // obter código completo, sem comentário
                     var lines = fullcode.Split(new string[] { "\n" },
                         StringSplitOptions.None);
@@ -91,7 +91,7 @@ namespace Console_WSA_ProjDoc
             }
             catch (Exception e)
             {
-                Logging.WriteLog("Falha ao tentar mapear a declaração de funções: " + e);
+                Logging.WriteLog("An Exception occurred during the function call indexing: " + e);
             }
 
             return breturn;

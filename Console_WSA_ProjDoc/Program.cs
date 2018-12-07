@@ -14,7 +14,7 @@ namespace Console_WSA_ProjDoc
 {
     internal class Program : ServiceBase
     {
-        private static TfsDownloader TFSDownloader = new TfsDownloader();
+        private static TFVCDownloader TFVCDownloader = new TFVCDownloader();
         private static readonly XmlConfigs.Xml Xml = new XmlConfigs.Xml();
         private static readonly Logging Logging = new Logging();
 
@@ -47,61 +47,64 @@ namespace Console_WSA_ProjDoc
                             ManagedInstallerClass.InstallHelper(new[] {"/u", Assembly.GetExecutingAssembly().Location});
                             break;
                         default:
-                            Logging.WriteLog(@"Execução em modo console.");
-                            while (projects < Xml.Projects)
+                            Logging.WriteLog(@"Console Mode: YES.");
+                            var UpdateHTML = true;
+                            while (projects < Xml.Projects +1)
                             {
                                 //
-                                Logging.WriteLog("Iniciando projeto " + projects);
+                                Logging.WriteLog("Starting project " + projects + "...");
                                 projecttype = Xml.GetProjectType(projects);
-                                if (projecttype == "TFS")
+                                if (projecttype == "tfvc")
                                 {
                                     Xml.GetTfsElements(projects);
-                                    TFSDownloader.LoadXml(Xml);
-                                    TFSDownloader.GetProject(projects, Xml.TfsChangesets == "show");
+                                    TFVCDownloader.LoadXml(Xml);
+                                    //TFVCDownloader.GetProject(projects, Xml.TfsChangesets == "true");
                                 }
-                                if (projecttype == "Local")
+                                else if (projecttype == "local")
                                 {
                                     Xml.GetLocalElements(projects);
                                 }
-                                // Mudança de Idioma
-                                Thread.CurrentThread.CurrentUICulture = new CultureInfo(Xml.Language);
-                                Xml.LoadDictionary();
-                                //
-                                var html = new HtmlGenerator();
-                                html.LoadXml(Xml);
-                                html.Start();
-                                Logging.WriteLog("Projeto " + projects + " finalizado.");
-                                projects++;
+                                else UpdateHTML = false;
+                                if (UpdateHTML)
+                                {
+                                    // Mudança de Idioma
+                                    Thread.CurrentThread.CurrentUICulture = new CultureInfo(Xml.Language);
+                                    Xml.LoadDictionary();
+                                    //
+                                    var html = new HtmlGenerator();
+                                    html.LoadXml(Xml);
+                                    html.Start();
+                                    Logging.WriteLog("Project " + projects + " Documentation Status: CONCLUDED.");
+                                }
+                                else Logging.WriteLog("The project type [" + projecttype + "] is not valid.");
+                                    projects++;
                             }
+                            Logging.WriteLog(@"The Update of every project was executed.");
 
                             break;
                     }
                 }
                 catch (System.Xml.XmlException e)
                 {
-                    Logging.WriteLog(@"Falha durante a manutenção do XML: " + e);
+                    Logging.WriteLog(@"An XML Exception occurred during the current execution: " + e);
                 }
                 catch (Exception e)
                 {
-                    Logging.WriteLog(@"Falha durante a manutenção do serviço: " + e);
+                    Logging.WriteLog(@"An Exception occurred during the current execution: " + e);
                 }
             }
             else
             {
-                Logging.WriteLog(@"Execução fora do modo de debug e console");
+                Logging.WriteLog(@"Console Mode: NO.");
                 Run(new Program());
             }
         }
 
-        private static void CurrentDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            File.AppendAllText(@"C:\Temp\error.txt",
-                ((Exception) e.ExceptionObject).Message + ((Exception) e.ExceptionObject).InnerException.Message);
-        }
+        private static void CurrentDomainUnhandledException(object sender, UnhandledExceptionEventArgs e) => Logging.WriteLog(((Exception) e.ExceptionObject).Message + ((Exception) e.ExceptionObject).InnerException.Message);
 
         protected override void OnStart(string[] args)
         {
-            Logging.WriteLog("A execução do serviço foi iniciada.");
+            Logging.WriteLog("The Service Execution has started...");
 
             base.OnStart(args);
         }
@@ -110,13 +113,13 @@ namespace Console_WSA_ProjDoc
         {
             base.OnStop();
 
-            Logging.WriteLog("A execução do serviço foi finalizada.");
+            Logging.WriteLog("The Service Execution has stopped...");
         }
 
         private void StartUp()
         {
             if (!File.Exists(Xml.XmlFileName))
-                Logging.WriteLog("O arquivo de configuração não existe em:" + Xml.AssemblyFolder + Xml.XmlFileName);
+                Logging.WriteLog("The configuration file does not exists at: " + Xml.AssemblyFolder + Xml.XmlFileName);
         }
     }
 }

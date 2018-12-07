@@ -18,14 +18,14 @@ namespace Console_WSA_ProjDoc.CSS
         public void LoadXml(XmlConfigs.Xml xml)
         {
             this.Xml = xml;
-            _d = new DirectoryInfo(xml.TfsFolder);
+            _d = new DirectoryInfo(xml.LocalFolder);
         }
 
         #endregion
         public void CopyCss()
         {
             string originalfolder = Assemblyfolder + @"CSS\";
-            string htmlfolder = Xml.HtmlFolder  + HtmlFormatters.URLReplace(Xml.ProjectName + @"\");
+            string htmlfolder = Xml.HtmlFolder  + HtmlFormatters.URLReplace(Xml.ProjectTitle + @"\");
 
             Copy(originalfolder, htmlfolder);
         }

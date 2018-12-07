@@ -217,7 +217,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="SHA1\FileHash.cs" />
-    <Compile Include="TFS\TFSDownloader.cs" />
+    <Compile Include="TFS\TFVCDownloader.cs" />
     <Compile Include="XML\XMLConfigs.cs" />
     <Compile Include="XML\XMLOperations.cs" />
   </ItemGroup>

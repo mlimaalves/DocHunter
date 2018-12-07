@@ -11,31 +11,31 @@ namespace Console_WSA_ProjDoc.XML
     {
         #region Variáveis para leitura do arquivo XML (config)
 
-        private readonly XmlDocument _xml = new XmlDocument();
+        private readonly XmlDocument _xmlSettings = new XmlDocument();
 
         #endregion
 
         public XmlOperations()
         {
-            _xml.Load(Assemblyfolder + Xmlfilename);
+            _xmlSettings.Load(Assemblyfolder + Xmlfilename);
         }
 
         public string GetXmlElements(string strnode, bool obrigatorio = false)
         {
             var sret = "";
-            if (_xml.DocumentElement.SelectSingleNode(strnode) == null)
+            if (_xmlSettings.DocumentElement.SelectSingleNode(strnode) == null)
             {
                 // Tratativas caso a tag do parâmetro não seja encontrada no arquivo .XML:
                 if (obrigatorio)
                 {
-                    Logging.WriteLog("Erro: O seguinte nó é obrigatório e não foi encontrado no arquivo XML:\n" +
+                    Logging.WriteLog("ERROR: THE FOLLOWING NODE IS MANDATORY AND IT WAS NOF FOUND IN THE configurations.xml FILE:\n" +
                                      strnode);
                     Environment.Exit(1);
                 }
             }
             else
             {
-                sret = _xml.DocumentElement.SelectSingleNode(strnode).InnerText;
+                sret = _xmlSettings.DocumentElement.SelectSingleNode(strnode).InnerText;
             }
 
             return sret;
@@ -43,7 +43,7 @@ namespace Console_WSA_ProjDoc.XML
 
         public int GetProjectCount(string strnode)
         {
-            return _xml.DocumentElement.GetElementsByTagName(strnode).Count;
+            return _xmlSettings.DocumentElement.GetElementsByTagName(strnode).Count;
         }
 
         public void GetXmlProjectElements()
@@ -55,13 +55,13 @@ namespace Console_WSA_ProjDoc.XML
             var creturn = "";
             var xmLtype = "";
             var typelist = new List<string>();
-            /* tipos de projeto válidos para criar documentação */
-            typelist.Add("TFS");
-            typelist.Add("LOCAL");
+            /* tipos de project válidos para criar documentação */
+            typelist.Add("tfvc");
+            typelist.Add("local");
 
             if (nId > 0)
-                xmLtype = _xml.DocumentElement.SelectSingleNode("/configuracoes/projetos/projeto[@nId='" + nId + "']")
-                    .Attributes["type"].InnerText.ToUpper();
+                xmLtype = _xmlSettings.DocumentElement.SelectSingleNode("/configurations/projects/project[@nId='" + nId + "']")
+                    .Attributes["type"].InnerText.ToLower();
             if (typelist.Find(c => c == xmLtype) != null) creturn = xmLtype;
 
             return creturn;
@@ -70,17 +70,21 @@ namespace Console_WSA_ProjDoc.XML
         public List<string[]> GetXmlDictionary(string language)
         {
             var ret = new List<string[]>();
-            XmlDocument _xmldic = new XmlDocument();
-            _xml.Load(Assemblyfolder + @"languages\" + language + ".xml");
-            XmlElement root = _xml.DocumentElement;
-            XmlNodeList nodelist = root.SelectNodes("item");
-            foreach (XmlNode node in nodelist)
+            XmlDocument _xmlDic = new XmlDocument();
+            if (File.Exists(Assemblyfolder + @"languages\" + language + ".xml"))
             {
-                var str = new string[2];
-                str[0] = node.Attributes[0].InnerText; // id
-                str[1] = node.FirstChild.InnerText; // texto do id
-                ret.Add(str);
+                _xmlDic.Load(Assemblyfolder + @"languages\" + language + ".xml");
+                XmlElement root = _xmlDic.DocumentElement;
+                XmlNodeList nodelist = root.SelectNodes("item");
+                foreach (XmlNode node in nodelist)
+                {
+                    var str = new string[2];
+                    str[0] = node.Attributes[0].InnerText; // id
+                    str[1] = node.FirstChild.InnerText; // texto do id
+                    ret.Add(str);
+                }
             }
+            else Logging.WriteLog(@"ATTENTION: THE LANGUAGE FILE \LANGUAGES\" + language + ".xml DOES NOT EXISTS. THE HTML TEXTS WILL NOT BE SHOWN CORRECTLY.");
             return ret;
         }
 
@@ -97,7 +101,7 @@ namespace Console_WSA_ProjDoc.XML
 
         #region Arquivo de Configurações:
 
-        private static readonly string Xmlfilename = "appserver.xml";
+        private static readonly string Xmlfilename = "configurations.xml";
 
         public string XmlFileName => Xmlfilename;
 
