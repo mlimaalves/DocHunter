@@ -15,6 +15,7 @@ namespace Console_WSA_ProjDoc
     internal class Program : ServiceBase
     {
         private static TFVCDownloader TFVCDownloader = new TFVCDownloader();
+        //private static ExecuteQuery Azure_DevOps = new ExecuteQuery();
         private static readonly XmlConfigs.Xml Xml = new XmlConfigs.Xml();
         private static readonly Logging Logging = new Logging();
 
@@ -58,7 +59,7 @@ namespace Console_WSA_ProjDoc
                                 {
                                     Xml.GetTfsElements(projects);
                                     TFVCDownloader.LoadXml(Xml);
-                                    //TFVCDownloader.GetProject(projects, Xml.TfsChangesets == "true");
+                                    TFVCDownloader.GetProject(projects, Xml.TfsHistory == "true");
                                 }
                                 else if (projecttype == "local")
                                 {
@@ -69,7 +70,8 @@ namespace Console_WSA_ProjDoc
                                 {
                                     // Mudança de Idioma
                                     Thread.CurrentThread.CurrentUICulture = new CultureInfo(Xml.Language);
-                                    Xml.LoadDictionary();
+                                    Xml.LoadDictionaryList();
+                                    Xml.LoadRegexList();
                                     //
                                     var html = new HtmlGenerator();
                                     html.LoadXml(Xml);

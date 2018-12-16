@@ -21,7 +21,6 @@ namespace Console_WSA_ProjDoc.HTML
         private static readonly string Assemblyfolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\";
         private string Tree = "";
         private string CodeErrorList = "";
-        private FunctionIndexer FunctionIndexer;
         public void LoadXml(XmlConfigs.Xml xml) => this.Xml = xml;
 
         public bool Start()
@@ -66,7 +65,7 @@ namespace Console_WSA_ProjDoc.HTML
             #region Copiando arquivos css originais do bináiro para o diretório HTML:
             var css = new CssGenerator();
             css.LoadXml(Xml);
-            css.CopyCss();
+            css.CopyCss(htmlFolder);
             #endregion
 
             #region CRIANDO ÁRVORE DE PASTAS E ROTINAS PARA A NAVEGAÇÃO PRINCIPAL
@@ -95,9 +94,9 @@ namespace Console_WSA_ProjDoc.HTML
             var tfsFolder = new DirectoryInfo(Xml.LocalFolder);
             var counter = tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Length;
             var current = 0;
-            var Indexed = false;
+
             foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories)
-                .Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
+                .Where(d=> !d.FullName.ToString().Contains(".vscode")))
             {
                 current++;
                 Logging.WriteLog(current + " of " + counter + " files processed.", true);
@@ -119,14 +118,6 @@ namespace Console_WSA_ProjDoc.HTML
                 fs.Close();
                 if (!File.Exists(file) || FileHash.CompareHash(originalfilename, hash, Xml.Extension))
                 {
-                    if (!Indexed && Xml.CallIndex == "true")
-                    {
-                        FunctionIndexer = new FunctionIndexer();
-                        FunctionIndexer.LoadXml(Xml);
-                        FunctionIndexer.FunctionMapping();
-                        Indexed = true;
-                    }
-
                     CreateHTMLFile(file, "Code.html");
                     Replace_NameArea(file, Xml.ProjectTitle);
                     Replace_FileNameArea(file, codefile.Name);
@@ -135,7 +126,7 @@ namespace Console_WSA_ProjDoc.HTML
                     Replace_BreadcrumbArea(file, originalfilename);
                     RegExDocumentation(file, codefile.FullName);
                     RegExCode(file, codefile.FullName);
-                    Replace_ChangesetsArea(file, codefile.FullName);
+                    Replace_History(file, codefile.FullName);
                     Replace_Dictionary(file);
                 }
             }
@@ -170,7 +161,7 @@ namespace Console_WSA_ProjDoc.HTML
             var f = new FileInfo(mainfile);
 
             foreach (var directory in currentFolder.GetDirectories("*.*", SearchOption.TopDirectoryOnly)
-                .Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
+                .Where(d => !d.FullName.ToString().Contains(".vscode")))
             {
                 var identifier = directory.Name;
                 identifier = HtmlFormatters.URLReplace(identifier);
@@ -226,7 +217,7 @@ namespace Console_WSA_ProjDoc.HTML
             #region loop em ARQUIVOS- Gera uma tag <a> para cada arquivo encontrado
 
             foreach (var codefile in currentFolder.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
-                .Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
+                .Where(d =>  !d.FullName.ToString().Contains(".vscode")))
             {
                 var href = codefile.Name;
                 href = HtmlFormatters.URLReplace(href) + ".html";
@@ -248,7 +239,7 @@ namespace Console_WSA_ProjDoc.HTML
         {
             var f = new FileInfo(originalfilename.ToLower());
             var replace = (Xml.LocalFolder).ToLower();
-            var breadcrumbfolders =@"\"+ f.FullName.Replace(replace, "").Replace(@"\main.html", "");
+            var breadcrumbfolders = @"\" + f.FullName.Replace(replace, "").Replace(@"\main.html", "");
             var folderSplit = f.Name == "main.html" ? new String[1] : breadcrumbfolders.Split(Path.DirectorySeparatorChar);
             var breadcrumbText = "";
             int x;
@@ -288,7 +279,7 @@ namespace Console_WSA_ProjDoc.HTML
             File.WriteAllText(file, File.ReadAllText(file).Replace("&breadcrumbArea&", breadcrumbText));
         }
 
-        private void Replace_ChangesetsArea(string file, string originalfilename)
+        private void Replace_History(string file, string originalfilename)
         {
             var f = new FileInfo(originalfilename);
             var csfile = f.Directory.FullName + @"\" + f.Name.Replace(Xml.Extension, "") + ".#tfvc";
@@ -299,10 +290,10 @@ namespace Console_WSA_ProjDoc.HTML
             var search = csfile;
 
 
-            if (Xml.TfsChangesets == "true" && File.Exists(csfile))
+            if (Xml.TfsHistory == "true" && File.Exists(csfile))
             {
                 csnav += "						<li class='nav-item'>" + Environment.NewLine;
-                csnav += "							<a class='nav-link' id='changesets-tab' data-toggle='tab' href='#changesets' role='tab' aria-controls='changesets' aria-selected='false'>&Dic:tab_changesets&</a>" + Environment.NewLine;
+                csnav += "							<a class='nav-link' id='history-tab' data-toggle='tab' href='#history' role='tab' aria-controls='history' aria-selected='false'>&Dic:tab_historys&</a>" + Environment.NewLine;
                 csnav += "						</li>";
                 var lines = File.ReadAllText(csfile).Split(new string[] { "\n" },
                 StringSplitOptions.None);
@@ -321,7 +312,7 @@ namespace Console_WSA_ProjDoc.HTML
                         if (currcs == "" || csDatetime.ToString("dd/MM/yyyy hh:mm:ss") != currdatetime.ToString("dd/MM/yyyy hh:mm:ss"))
                         {
                             if (currcs != "") currcs += "								</li>" + Environment.NewLine; // Fechando já existente
-                            currcs += "								<li class='list-group-item'>" + Environment.NewLine; // Criando novo grupo de changeset
+                            currcs += "								<li class='list-group-item'>" + Environment.NewLine; // Creates a new history group
                             currdatetime = csDatetime;
                             cscount = 0;
                             currcs += "									<div class='text-muted font-weight-bold'>" +
@@ -332,22 +323,22 @@ namespace Console_WSA_ProjDoc.HTML
                     }
                     else if (line.Contains("@Comment:"))
                     {
-                        currcs += "									<div class='custom-changeset'>" + Environment.NewLine;
+                        currcs += "									<div class='custom-history'>" + Environment.NewLine;
                         currcs += "										<h6 " +
-                            "class='custom-changeset-title' " +
+                            "class='custom-history-title' " +
                             "data-toggle='tooltip' " +
                             "data-placement='bottom' title='&newTitle&'>" + Environment.NewLine +
                             "&newComment&" + Environment.NewLine;
                         tempcomment = line.Replace("@Comment: ", "");
                         temptitle = tempcomment + Environment.NewLine;
                     }
-                    else if (line.Contains("@Changeset:"))
+                    else if (line.Contains("@History:"))
                     {
                         currcs = currcs.Replace("&newTitle&", temptitle).Replace("&newComment&", tempcomment);
                         currcs += "										<div class='text-muted font-weight-normal'>" +
-                            "Changeset " + line.Replace("@Changeset: ", "") + "</div>" + Environment.NewLine;
+                            "History " + line.Replace("@History: ", "") + "</div>" + Environment.NewLine;
                         currcs += "										</h6>" + Environment.NewLine;
-                        currcs += "									</div>" + Environment.NewLine; // fim changeset
+                        currcs += "									</div>" + Environment.NewLine; // History group end
 
                     }
                     else // continuação comentário
@@ -358,8 +349,8 @@ namespace Console_WSA_ProjDoc.HTML
                     cscount++;
                 }
             }
-            File.WriteAllText(file, File.ReadAllText(file).Replace("&ChangesetsNavArea&", csnav));
-            File.WriteAllText(file, File.ReadAllText(file).Replace("&ChangesetsArea&", currcs));
+            File.WriteAllText(file, File.ReadAllText(file).Replace("&HistoryTab&", csnav));
+            File.WriteAllText(file, File.ReadAllText(file).Replace("&HistoryArea&", currcs));
         }
 
         private void Replace_SearchArea(string file)
@@ -367,9 +358,9 @@ namespace Console_WSA_ProjDoc.HTML
             var tfsFolder = new DirectoryInfo(Xml.LocalFolder);
             var searchList = "";
             var f = new FileInfo(file);
-            foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
+            foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Where(d =>  !d.FullName.ToString().Contains(".vscode")))
             {
-                var searchText = WebUtility.HtmlEncode(Xml.ProjectTitle + codefile.FullName.Replace(Xml.LocalFolder, ""));
+                var searchText = WebUtility.HtmlEncode(Xml.ProjectTitle + @"\" + codefile.FullName.Replace(Xml.LocalFolder, ""));
                 var replace = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectTitle);
                 string[] split = f.Directory.FullName.Replace(replace, "").Split(Path.DirectorySeparatorChar);
                 var goback = string.Concat(Enumerable.Repeat("../", split.Length - 1));
@@ -396,7 +387,7 @@ namespace Console_WSA_ProjDoc.HTML
 
         private void Replace_Dictionary(string file)
         {
-            foreach (string[] line in Xml.Dictionary)
+            foreach (string[] line in Xml.DictionaryList)
             {
                 File.WriteAllText(file, File.ReadAllText(file).Replace("&Dic:" + line[0] + "&", line[1]));
             }
@@ -405,8 +396,6 @@ namespace Console_WSA_ProjDoc.HTML
         private void Replace_TreeArea(string file) => File.WriteAllText(file, File.ReadAllText(file).Replace("&treeArea&", Tree));
 
         private void Replace_ErrorArea(string file) => File.WriteAllText(file, File.ReadAllText(file).Replace("&ErrorArea&", CodeErrorList));
-
-        private void Replace_SyntaxArea(string file, string syntax) => File.WriteAllText(file, File.ReadAllText(file).Replace("&SyntaxArea&", syntax));
 
         private void RegExCode(string htmlfile, string codefile)
         {
@@ -428,9 +417,11 @@ namespace Console_WSA_ProjDoc.HTML
         private void RegExDocumentation(string htmlfile, string codefile)
         {
             //
-            string protheusDoc = "";
+            string CommentBlock = "";
             string description = "";
             string wherevar = "";
+            List<string> exampleslist = new List<string>();
+            List<string> obslist = new List<string>();
             List<string> todolist = new List<string>();
             List<string[]> param = new List<string[]>();
             List<string[]> returnvar = new List<string[]>();
@@ -441,42 +432,47 @@ namespace Console_WSA_ProjDoc.HTML
 
             CodeErrorList = "";
 
-            #region OBTER O PRIMEIRO PROTHEUS.DOC
-            regexPattern = @"(/\*/.*?/\*/)";
+            #region COMMENT BLOCK [commentblock] SECTION
+            regexPattern = Xml.Regex("commentblock");
             Regex regex = new Regex(regexPattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
             search = fullcode;
             Match match = regex.Match(search);
 
-            fullcode = ReplaceComments(fullcode);
             if (match.Success)
             {
-                protheusDoc = match.Value;
-                #region PROTHEUS.DOC - OBTER DESCRIÇÃO (LINHAS ANTES DO PRIMEIRO PARÂMETRO)
-                regexPattern = @"\n.*?(?=@)";
-                regex = new Regex(regexPattern, RegexOptions.Singleline);
-                search = protheusDoc;
-                match = regex.Match(search);
-                if (match.Success) description = match.Value.Replace("\n", "<br>");
+                CommentBlock = match.Value;
+
+                #region COMMENT BLOCK - GETS THE [examples] ARRAY
+                regexPattern = Xml.Regex("examples");
+                regex = new Regex(regexPattern, RegexOptions.IgnoreCase);
+                search = CommentBlock;
+                foreach (Match m in regex.Matches(search))
+                {
+                    var currexample = RemoveRegexItemText(Xml.Regex("examples"), m.Value);
+                    exampleslist.Add(currexample);
+                }
                 #endregion
 
-                #region PROTHEUS.DOC - OBTER OBSERVAÇÕES)
-                regexPattern = @"@where.*";
+                #region COMMENT BLOCK - GETS THE [obs] ARRAY
+                regexPattern = Xml.Regex("observations");
                 regex = new Regex(regexPattern, RegexOptions.IgnoreCase);
-                search = protheusDoc;
-                match = regex.Match(search);
-                if (match.Success) wherevar = ReplacepDocPar("@where", match.Value); // removendo texto @where e espaços
+                search = CommentBlock;
+                foreach (Match m in regex.Matches(search))
+                {
+                    var currobs = RemoveRegexItemText(Xml.Regex("observations"), m.Value);
+                    obslist.Add(currobs);
+                }
                 #endregion
 
-                #region PROTHEUS.DOC - OBTER ARRAY @param
-                regexPattern = @"@param.*";
+                #region COMMENT BLOCK - GETS THE [param] ARRAY
+                regexPattern = Xml.Regex("param");
                 regex = new Regex(regexPattern, RegexOptions.IgnoreCase);
-                search = protheusDoc;
 
-                if (regex.Matches(search).Count > 0)
+                if (regex.Matches(CommentBlock).Count > 0)
                 {
                     foreach (Match m in regex.Matches(search))
                     {
-                        var currparam = ReplacepDocPar("@param", m.Value); // removendo texto @param e espaços
+                        var currparam = RemoveRegexItemText(Xml.Regex("param"), m.Value);
                         var currregex = new Regex(@".*?,", RegexOptions.IgnoreCase);
                         var matchcollection = currregex.Matches(currparam);
                         if (matchcollection.Count > 0)
@@ -501,7 +497,7 @@ namespace Console_WSA_ProjDoc.HTML
                         }
                     }
                 }
-                else // Nenhum @param foi identificado no Protheus.Doc
+                else // No [param] was identified in the CommentBlock
                 {
                     var errormsg = "";
                     errormsg = "&Dic:err_paramnotfound&";
@@ -511,40 +507,37 @@ namespace Console_WSA_ProjDoc.HTML
 
                 #endregion
 
-                #region PROTHEUS.DOC - OBTER ARRAY @ToDo
-                regexPattern = @"@todo.*";
+                #region COMMENT BLOCK - GETS THE [todo] ARRAY
+                regexPattern = Xml.Regex("todo");
                 regex = new Regex(regexPattern, RegexOptions.IgnoreCase);
-                search = protheusDoc;
+                search = CommentBlock;
                 foreach (Match m in regex.Matches(search))
                 {
-                    var currtodo = ReplacepDocPar("@todo", m.Value); // removendo texto @Todo e espaços
+                    var currtodo = RemoveRegexItemText(Xml.Regex("todo"), m.Value); // removendo texto @Todo e espaços
                     todolist.Add((todolist.Count + 1) + ") " + currtodo);
                 }
                 #endregion
 
-                #region PROTHEUS.DOC - OBTER ARRAY @return (RETORNO DA FUNÇÃO)
-                regexPattern = @"@return.*";
+                #region COMMENT BLOCK - GETS THE [return]
+                regexPattern = Xml.Regex("return");
                 regex = new Regex(regexPattern, RegexOptions.IgnoreCase);
-                search = protheusDoc;
+                search = CommentBlock;
                 if (regex.Matches(search).Count > 0)
                 {
                     foreach (Match m in regex.Matches(search))
                     {
-                        var currreturn = ReplacepDocPar("@return", m.Value); // removendo texto @return e espaços
-                        var currregex = new Regex(@".*?,", RegexOptions.IgnoreCase);
+                        var currreturn = RemoveRegexItemText(Xml.Regex("return"), m.Value); // removendo texto @return e espaços
+                        var currregex = new Regex(@"[^,]+.*?(?=,)", RegexOptions.IgnoreCase);
                         var matchcollection = currregex.Matches(currreturn);
                         if (matchcollection.Count > 0)
                         {
-                            if (matchcollection.Count > 1)
-                            {
-                                var str = new string[3];
-                                currreturn = currreturn.Replace(matchcollection[0].Value, "");
-                                currreturn = currreturn.Replace(matchcollection[1].Value, "");
-                                str[0] = matchcollection[0].Value.Replace(",", "").Replace(" ", "");
-                                str[1] = matchcollection[1].Value.Replace(",", "").Replace(" ", "").ToLower();
-                                str[2] = currreturn; // Descrição = resto do @return que não foi validado pelo RegEx
-                                returnvar.Add(str);
-                            }
+                            var str = new string[3];
+                            currreturn = currreturn.Replace(matchcollection[0].Value, "");
+                            currreturn = (matchcollection.Count > 2) ? currreturn.Replace(matchcollection[1].Value, "") : currreturn.Replace(",","");
+                            str[0] = matchcollection[0].Value;
+                            str[1] = (matchcollection.Count > 2) ? matchcollection[1].Value : "";
+                            str[2] = currreturn; // Descrição = resto do @return que não foi validado pelo RegEx
+                            returnvar.Add(str);
                         }
                         else
                         {
@@ -567,109 +560,31 @@ namespace Console_WSA_ProjDoc.HTML
             else
             {
                 var errormsg = "";
-                errormsg = "&Dic:err_pdoc&";
+                errormsg = "&Dic:err_commentblock&";
                 FeedError("danger", errormsg);
             }
 
             // Após analisar todas as variáveis, substitui o arquivo HTML:
-            pDocDescription(htmlfile, description);
-            pDocWhere(htmlfile, wherevar);
-            pDocParam(htmlfile, param);
-            pDocReturn(htmlfile, returnvar);
-            pDocToDo(htmlfile, todolist);
-            #endregion
-
-            #region OBTER NOME E SINTAXE DA FUNÇÃO (PRIMEIRO ITEM DO Match)
-            var functions = fullcode;
-            ReplaceComments(functions);
-            regexPattern = @"(.*function)\s+(\w.*)";
-            regex = new Regex(regexPattern, RegexOptions.IgnoreCase);
-            match = regex.Match(functions);
-            if (match.Success)
-            {
-                var funtype = match.Groups[1].Value.ToLower().Contains("user") ? "U_" : ""; // Grupo 1 = Tipo da Função
-                var funcall = match.Groups[2].Value; // Nome da Função + Parâmetros
-                Replace_SyntaxArea(htmlfile, funtype + funcall);
-            }
-            #endregion
-
-            #region OBTER REFERÊNCIAS/CHAMADAS DAS USERFUNCTIONS EM OUTROS ARQUIVOS
-            var cfunref = "";
-            if (Xml.CallIndex == "true")
-            {
-                foreach (FunctionIndexer.ProjectMapping f in FunctionIndexer._functionMatches.Where(x => x.FilePath.ToUpper() + x.FileName.ToUpper() == codefile.ToUpper()))
-                {
-                    if (f.FunctionType == "User Function")
-                    {
-                        foreach (FunctionIndexer.ProjectCalling c in FunctionIndexer._functionCalls.Where(x => x.FunctionName.ToUpper() == f.FunctionName.ToUpper()))
-                        {
-                            var currfiledir =
-                                new FileInfo(htmlfile).Directory.FullName.Replace(
-                                    Xml.HtmlFolder + HtmlFormatters.URLReplace(Xml.ProjectTitle) + @"\", "");
-                            var folderSplit = currfiledir.Split(Path.DirectorySeparatorChar);
-                            var goback = string.Concat(Enumerable.Repeat("../", folderSplit.Length));
-                            var calldir = HtmlFormatters.URLReplace(c.FilePath.Replace(Xml.LocalFolder, "") + c.FileName) + ".html";
-
-                            cfunref += "									<a " +
-                                      "class='card-text custom-card-text4' " +
-                                      "href='" + goback + calldir + "#" + c.LineNumber + "'>" +
-                                      c.FilePath.Replace(Xml.LocalFolder, "") + c.FileName + " => U_" + c.FunctionName + ", Linha " + c.LineNumber + "</a><br>" + Environment.NewLine;
-
-                        }
-                    }
-                }
-                cfunref += "<p></p>";
-            }
-            Replace_FunctionCallArea(htmlfile, cfunref);
+            SetExamples(htmlfile, exampleslist);
+            SetObservations(htmlfile, obslist);
+            SetParam(htmlfile, param);
+            SetReturn(htmlfile, returnvar);
+            SetToDo(htmlfile, todolist);
             #endregion
 
             Replace_ErrorArea(htmlfile);
         }
 
-        private string ReplacepDocPar(string pattern, string Text)
+        private string RemoveRegexItemText(string pattern, string Text)
         {
-            var regexPattern = pattern + @".*?(?=[A-Za-z|1-9])";
+            var regexPattern = pattern + @"?(?=[\[|@|!|#|\]|A-Za-z|1-9])";
             var regex = new Regex(regexPattern, RegexOptions.Singleline);
             var match = regex.Match(Text);
             if (match.Success) return Text.Replace(match.Value, "");
             else return Text;
         }
 
-        private string ReplaceComments(string Text)
-        {
-            #region REMOVER DO TEXTO BLOCOS DE CÓDIGO COM Protheus.Doc
-            var regexPattern = @"(/\*/.*?/\*/)";
-            var regex = new Regex(regexPattern, RegexOptions.Singleline);
-            var match = regex.Match(Text);
-            foreach (Match m in regex.Matches(Text))
-            {
-                Text = Text.Replace(m.Value, "");
-            }
-            #endregion
-
-            #region REMOVER DO TEXTO BLOCOS DE CÓDIGO COM //
-            regexPattern = @"\/\/.*";
-            regex = new Regex(regexPattern);
-            match = regex.Match(Text);
-            foreach (Match m in regex.Matches(Text))
-            {
-                Text = Text.Replace(m.Value, "");
-            }
-            #endregion
-
-            #region REMOVER DO TEXTO BLOCOS DE CÓDIGO COM /*
-            regexPattern = @"\/\*.*?\*\/";
-            regex = new Regex(regexPattern, RegexOptions.Singleline);
-            match = regex.Match(Text);
-            foreach (Match m in regex.Matches(Text))
-            {
-                Text = Text.Replace(m.Value, "");
-            }
-            #endregion
-            return Text;
-        }
-
-        private void pDocParam(string file, List<string[]> param)
+        private void SetParam(string file, List<string[]> param)
         {
             var newText = "";
             if (param.Count > 0)
@@ -688,10 +603,10 @@ namespace Console_WSA_ProjDoc.HTML
             }
             else newText += "<p></p>" + Environment.NewLine;
 
-            File.WriteAllText(file, File.ReadAllText(file).Replace("&pDoc:Param&", newText));
+            File.WriteAllText(file, File.ReadAllText(file).Replace("&Doc:Param&", newText));
         }
 
-        private void pDocReturn(string file, List<string[]> returnvar)
+        private void SetReturn(string file, List<string[]> returnvar)
         {
             var newText = "";
             if (returnvar.Count > 0)
@@ -710,10 +625,10 @@ namespace Console_WSA_ProjDoc.HTML
             }
             else newText += "<p></p>" + Environment.NewLine;
 
-            File.WriteAllText(file, File.ReadAllText(file).Replace("&pDoc:Return&", newText));
+            File.WriteAllText(file, File.ReadAllText(file).Replace("&Doc:Return&", newText));
         }
 
-        private void pDocToDo(string file, List<string> todolist)
+        private void SetToDo(string file, List<string> todolist)
         {
             var newText = "";
             if (todolist.Count > 0)
@@ -726,23 +641,41 @@ namespace Console_WSA_ProjDoc.HTML
             }
             else newText += "<br>" + Environment.NewLine;
 
-            File.WriteAllText(file, File.ReadAllText(file).Replace("&pDoc:ToDoList&", newText));
+            File.WriteAllText(file, File.ReadAllText(file).Replace("&Doc:ToDoList&", newText));
         }
 
-        private void pDocDescription(string file, string description) => File.WriteAllText(file, File.ReadAllText(file).Replace("&pDoc:Description&", description));
-
-        private void Replace_FunctionCallArea(string file, string cfunref) => File.WriteAllText(file, File.ReadAllText(file).Replace("&FunctionCallArea&", cfunref));
-
-        private void pDocWhere(string file, string wherevar)
+        private void SetExamples(string file, List<string> exampleslist)
         {
+
             var newText = "";
-            if (wherevar != "")
+            if (exampleslist.Count > 0)
             {
-                newText = "<span style='font-weight:bold'>EM QUE PONTO:</span> " +
-                              wherevar +
-                              "</p>" + Environment.NewLine;
+                for (int i = 0; i < exampleslist.Count; i++)
+                {
+                    newText += "								" +
+                               exampleslist[i] + "<br>" + Environment.NewLine;
+                }
             }
-            File.WriteAllText(file, File.ReadAllText(file).Replace("&pDoc:Where&", newText));
+            else newText += "<br>" + Environment.NewLine;
+
+            File.WriteAllText(file, File.ReadAllText(file).Replace("&Doc:Examples&", newText));
+        }
+
+        private void SetObservations(string file, List<string> obslist)
+        {
+
+            var newText = "";
+            if (obslist.Count > 0)
+            {
+                for (int i = 0; i < obslist.Count; i++)
+                {
+                    newText += "								" +
+                               obslist[i] + "<br>" + Environment.NewLine;
+                }
+            }
+            else newText += "<br>" + Environment.NewLine;
+
+            File.WriteAllText(file, File.ReadAllText(file).Replace("&Doc:Observations&", newText));
         }
 
         private void Create_Tree(string file, int recursivelevel = 0)
@@ -751,15 +684,15 @@ namespace Console_WSA_ProjDoc.HTML
             recursivelevel++; // Somente para checar o nível da recursividade da função
 
             if (folder.GetDirectories("*", SearchOption.TopDirectoryOnly)
-                .Any(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
+                .Any(d =>  !d.FullName.ToString().Contains(".vscode")))
             {
                 foreach (var directory in folder.GetDirectories("*", SearchOption.TopDirectoryOnly)
-                    .Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
+                    .Where(d =>  !d.FullName.ToString().Contains(".vscode")))
                 {
                     Tree += "{";
                     Tree += "text:'" + directory.Name + "'";
                     var dInfo = new DirectoryInfo(directory.FullName);
-                    if (dInfo.GetDirectories("*", SearchOption.TopDirectoryOnly).Count(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")) != 0)
+                    if (dInfo.GetDirectories("*", SearchOption.TopDirectoryOnly).Count(d =>  !d.FullName.ToString().Contains(".vscode")) != 0)
                     {
                         Tree += ",nodes:[";
                         Create_Tree(directory.FullName, recursivelevel);
@@ -769,7 +702,7 @@ namespace Console_WSA_ProjDoc.HTML
                     {
                         Tree += ",nodes:[";
                         foreach (var codefile in dInfo.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
-                            .Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
+                            .Where(d =>  !d.FullName.ToString().Contains(".vscode")))
                         {
                             var href = codefile.FullName.Replace(Xml.LocalFolder, "");
                             href = @".\" + HtmlFormatters.URLReplace(href) + ".html";
@@ -782,7 +715,7 @@ namespace Console_WSA_ProjDoc.HTML
                     }
                 }
                 foreach (var codefile in folder.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
-                    .Where(d => !d.FullName.ToString().Contains("$") && !d.FullName.ToString().Contains(".vscode")))
+                    .Where(d =>  !d.FullName.ToString().Contains(".vscode")))
                 {
                     var href = codefile.FullName.Replace(Xml.LocalFolder, "");
                     href = @".\" + HtmlFormatters.URLReplace(href) + ".html";

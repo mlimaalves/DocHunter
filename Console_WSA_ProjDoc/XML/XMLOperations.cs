@@ -67,7 +67,7 @@ namespace Console_WSA_ProjDoc.XML
             return creturn;
         }
 
-        public List<string[]> GetXmlDictionary(string language)
+        public List<string[]> GetDictionaryList(string language)
         {
             var ret = new List<string[]>();
             XmlDocument _xmlDic = new XmlDocument();
@@ -85,6 +85,28 @@ namespace Console_WSA_ProjDoc.XML
                 }
             }
             else Logging.WriteLog(@"ATTENTION: THE LANGUAGE FILE \LANGUAGES\" + language + ".xml DOES NOT EXISTS. THE HTML TEXTS WILL NOT BE SHOWN CORRECTLY.");
+            return ret;
+        }
+
+        public List<string[]> GetRegexList(string programminglanguage)
+        {
+            var ret = new List<string[]>();
+
+            XmlDocument _xmlDic = new XmlDocument();
+            if (File.Exists(Assemblyfolder + @"regex\" + programminglanguage + ".xml"))
+            {
+                _xmlDic.Load(Assemblyfolder + @"regex\" + programminglanguage + ".xml");
+                XmlElement root = _xmlDic.DocumentElement;
+                XmlNodeList nodelist = root.SelectNodes("item");
+                foreach (XmlNode node in nodelist)
+                {
+                    var str = new string[2];
+                    str[0] = node.Attributes[0].InnerText; // id
+                    str[1] = node.FirstChild.InnerText; // texto do id
+                    ret.Add(str);
+                }
+            }
+            else Logging.WriteLog(@"ERROR: THE PROGRAMMING LANGUAGE FILE \REGEX\" + programminglanguage+ ".xml DOES NOT EXISTS. THE PROJECT DOCUMENTATION WILL NOT BE CREATED.");
             return ret;
         }
 

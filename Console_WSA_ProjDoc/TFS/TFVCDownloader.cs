@@ -63,7 +63,12 @@ namespace Console_WSA_ProjDoc.TFS
             }
             catch (Exception e)
             {
-                Logging.WriteLog("An Exception has occurred during the TFS Authentication: \n" + e);
+                if (e.Message.Contains("TF14044") || e.Message.Contains("TF204017"))
+                {
+                    Logging.WriteLog("ERROR: User has no sufficient permissions to manage workspace. Please, try to access the following URL and check if the user is a member of a group that has 'Create a new workspace' permission allowed:" +
+                        Xml.TfsServerUrl + ((Xml.TfsServerUrl.ToString().Last().ToString() == "m") ? "/" : "") + "DefaultCollection/_settings/security" + " \n" + e);
+                }
+                else Logging.WriteLog("An Exception has occurred during the TFS Operations: \n" + e);
             }
             finally
             {
@@ -87,8 +92,8 @@ namespace Console_WSA_ProjDoc.TFS
 
             _basicCred = new BasicAuthCredential(_netCred);
             _TFVCcred = new TfsClientCredentials(_basicCred) { AllowInteractive = false };
-            _TFVC = new TfsTeamProjectCollection(new Uri(Xml.TfsServerUrl), _TFVCcred);
-            _TFVC.Authenticate();
+            _TFVC = new TfsTeamProjectCollection(new Uri(Xml.TfsServerUrl), _netCred);
+            _TFVC.EnsureAuthenticated();
 
             breturn = true;
 
@@ -102,21 +107,15 @@ namespace Console_WSA_ProjDoc.TFS
             var breturn = false;
 
             Logging.WriteLog("Currend Instance ID: " + _TFVC.InstanceId);
+            Logging.WriteLog("Configuring Workspace...");
 
-            #region Download do Workspace Local
-
-            Logging.WriteLog("Starting the Local Workspace Update...");
             var versioncontrols = (VersionControlServer)_TFVC.GetService(typeof(VersionControlServer));
             var workspace = versioncontrols.QueryWorkspaces(Workspacename, Xml.TfsUsername, Environment.MachineName)
                 .SingleOrDefault();
 
-            if (workspace != null) // Recriar o workspace local, caso o mesmo já exista
-                versioncontrols.DeleteWorkspace(Workspacename, Xml.TfsUsername);
-            workspace = versioncontrols.CreateWorkspace(Workspacename, Xml.TfsUsername);
-            var workfolder = new WorkingFolder(Xml.TfsProjectName, Xml.LocalFolder);
-            workspace.CreateMapping(workfolder);
+            if (workspace == null) workspace = versioncontrols.CreateWorkspace(Workspacename, Xml.TfsUsername);
+            if (workspace.MappingsAvailable == false) workspace.CreateMapping(new WorkingFolder(Xml.TfsProjectName, Xml.LocalFolder));
 
-            Logging.WriteLog("Local Folder: " + Xml.LocalFolder + ".");
             if (!Directory.Exists(Xml.LocalFolder)) Directory.CreateDirectory(Xml.LocalFolder);
 
             Logging.WriteLog("Starting the Project Download: " + Xml.TfsProjectName + "...");
@@ -124,9 +123,6 @@ namespace Console_WSA_ProjDoc.TFS
             Logging.WriteLog("Download statis: CONCLUDED.");
 
             breturn = true;
-
-            #endregion
-
             return breturn;
         }
 
@@ -135,7 +131,7 @@ namespace Console_WSA_ProjDoc.TFS
             var breturn = false;
             var d = new DirectoryInfo(Xml.LocalFolder);
             var vcs = (VersionControlServer)_TFVC.GetService(typeof(VersionControlServer));
-            var tp = vcs.GetTeamProject(Xml.ProjectTitle);
+            var tp = vcs.GetTeamProject(Xml.TfsProjectName.Replace("$/", ""));
             var path = "";
             var serveritem = tp.ServerItem;
             var folderstring = "";
@@ -173,10 +169,10 @@ namespace Console_WSA_ProjDoc.TFS
                         var fileContent = File.ReadLines(path).ToList();
                         File.WriteAllText(path, fileContent[0] + Environment.NewLine); // Salva apenas o conteúdo da primeira linha, que contém o último hash. Será utilizado para comparar se houve modificação no conteúdo do arquivo
                     }
-                    if (Xml.TfsChangesets == "true")
+                    if (Xml.TfsHistory == "true")
                     {
                         folderstring = file.FullName.Replace(Xml.LocalFolder, "").Replace("\\", "/");
-                        var changesetpath = tp.ServerItem + folderstring;
+                        var changesetpath = tp.ServerItem + "/" + folderstring;
 
                         changes = vcs.QueryHistory(
                             changesetpath,
@@ -195,7 +191,7 @@ namespace Console_WSA_ProjDoc.TFS
                         var texto = "";
                         texto = "@CreationDate: " + change.CreationDate + Environment.NewLine;
                         texto += "@Comment: " + change.Comment + Environment.NewLine;
-                        texto += "@Changeset: " + "#" + change.ChangesetId + ", " + change.CommitterDisplayName + Environment.NewLine;
+                        texto += "@History: " + "#" + change.ChangesetId + ", " + change.CommitterDisplayName + Environment.NewLine;
 
                         File.AppendAllText(path, texto);
                     }

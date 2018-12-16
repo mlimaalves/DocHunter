@@ -22,10 +22,9 @@ namespace Console_WSA_ProjDoc.CSS
         }
 
         #endregion
-        public void CopyCss()
+        public void CopyCss(string htmlfolder)
         {
             string originalfolder = Assemblyfolder + @"CSS\";
-            string htmlfolder = Xml.HtmlFolder  + HtmlFormatters.URLReplace(Xml.ProjectTitle + @"\");
 
             Copy(originalfolder, htmlfolder);
         }
