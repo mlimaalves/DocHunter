@@ -10,6 +10,8 @@ using Console_WSA_ProjDoc.CSS;
 using Console_WSA_ProjDoc.General;
 using Console_WSA_ProjDoc.XML;
 using Console_WSA_ProjDoc.SHA1;
+using Console_WSA_ProjDoc.SQLite;
+using System.Data;
 
 namespace Console_WSA_ProjDoc.HTML
 {
@@ -50,7 +52,7 @@ namespace Console_WSA_ProjDoc.HTML
         {
             const bool lRet = false;
             var htmlFolder = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectTitle);
-            var file = "";
+            var htmlfile = "";
             var dir = new DirectoryInfo(htmlFolder);
             try
             {
@@ -58,7 +60,7 @@ namespace Console_WSA_ProjDoc.HTML
             }
             catch (IOException e)
             {
-                Logging.WriteLog("ATTENTION: IT WAS NOT POSSIBLE TO EXCLUDE THE DIRECTORY: " + dir.FullName + ". THE PROCESS WILL CONTINUE.");
+                Logging.WriteLog("ATTENTION: IT WAS NOT POSSIBLE TO EXCLUDE THE DIRECTORY: " + dir.FullName + ". THE PROCESS WILL CONTINUE.\n" + e);
             }
             Directory.CreateDirectory(htmlFolder);
 
@@ -77,15 +79,15 @@ namespace Console_WSA_ProjDoc.HTML
 
             #region CRIANDO ARQUIVO NAVIGATION PRINCIPAL (MAIN.HTML)
             //Iniciando o project com o arquivo Main.Html
-            file = htmlFolder + @"\main.html";
-            CreateHTMLFile(file, "Navigation.html");
-            Replace_TreeArea(file);
-            Replace_NameArea(file, Xml.ProjectTitle);
-            Replace_ButtonArea(Xml.LocalFolder, file);
-            Replace_FileProtocolArea(file);
-            Replace_SearchArea(file);
-            Replace_BreadcrumbArea(file, file);
-            Replace_Dictionary(file);
+            htmlfile = htmlFolder + @"\main.html";
+            CreateHTMLFile(htmlfile, "Navigation.html");
+            Replace_TreeArea(htmlfile);
+            Replace_NameArea(htmlfile, Xml.ProjectTitle);
+            Replace_ButtonArea(Xml.LocalFolder, htmlfile);
+            Replace_FileProtocolArea(htmlfile);
+            Replace_SearchArea(htmlfile);
+            Replace_BreadcrumbArea(htmlfile, htmlfile);
+            Replace_Dictionary(htmlfile);
 
             Logging.WriteLog("main.html file created successfully. Generating the " + Xml.Extension + " documentation.");
             #endregion
@@ -96,7 +98,7 @@ namespace Console_WSA_ProjDoc.HTML
             var current = 0;
 
             foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories)
-                .Where(d=> !d.FullName.ToString().Contains(".vscode")))
+                .Where(d => !d.FullName.ToString().Contains(".vscode")))
             {
                 current++;
                 Logging.WriteLog(current + " of " + counter + " files processed.", true);
@@ -105,29 +107,29 @@ namespace Console_WSA_ProjDoc.HTML
                 newdirectory = htmlFolder + @"\" + HtmlFormatters.URLReplace(newdirectory.Replace(Xml.LocalFolder, ""));
                 Directory.CreateDirectory(newdirectory);
 
-                file = HtmlFormatters.URLReplace(codefile.Name) + ".html";
-                file = newdirectory + @"\" + file;
+                htmlfile = HtmlFormatters.URLReplace(codefile.Name) + ".html";
+                htmlfile = newdirectory + @"\" + htmlfile;
                 byte[] result;
 
                 System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
                 // This is one implementation of the abstract class SHA1.
                 FileStream fs = File.OpenRead(originalfilename);
                 result = sha.ComputeHash(fs);
-                var hash = "";
-                foreach (var line in result) hash += line.ToString();
+                var SHA1 = "";
+                foreach (var line in result) SHA1 += line.ToString();
                 fs.Close();
-                if (!File.Exists(file) || FileHash.CompareHash(originalfilename, hash, Xml.Extension))
+                if (!File.Exists(htmlfile) || FileHash.CompareHash(htmlfile, SHA1))
                 {
-                    CreateHTMLFile(file, "Code.html");
-                    Replace_NameArea(file, Xml.ProjectTitle);
-                    Replace_FileNameArea(file, codefile.Name);
-                    Replace_FileProtocolArea(file);
-                    Replace_SearchArea(file);
-                    Replace_BreadcrumbArea(file, originalfilename);
-                    RegExDocumentation(file, codefile.FullName);
-                    RegExCode(file, codefile.FullName);
-                    Replace_History(file, codefile.FullName);
-                    Replace_Dictionary(file);
+                    CreateHTMLFile(htmlfile, "Code.html", SHA1);
+                    Replace_NameArea(htmlfile, Xml.ProjectTitle);
+                    Replace_FileNameArea(htmlfile, codefile.Name);
+                    Replace_FileProtocolArea(htmlfile);
+                    Replace_SearchArea(htmlfile);
+                    Replace_BreadcrumbArea(htmlfile, originalfilename);
+                    RegExDocumentation(htmlfile, codefile.FullName);
+                    RegExCode(htmlfile, codefile.FullName);
+                    Replace_History(htmlfile, codefile.FullName);
+                    Replace_Dictionary(htmlfile);
                 }
             }
             #endregion
@@ -135,13 +137,13 @@ namespace Console_WSA_ProjDoc.HTML
             return lRet;
         }
 
-        private void CreateHTMLFile(string file, string filetype)
+        private void CreateHTMLFile(string htmldocfile, string filetype, string checksum = "")
         {
-            var f = new FileInfo(file);
             var navFolder = Assemblyfolder + @"HTML\";
-            var htmlfile = navFolder + filetype;
-            if (File.Exists(file)) File.Delete(file);
-            File.Copy(htmlfile, file, true);
+            var rawhtmlfile = navFolder + filetype;
+            if (File.Exists(htmldocfile)) File.Delete(htmldocfile);
+            File.Copy(rawhtmlfile, htmldocfile, true);
+            File.WriteAllText(htmldocfile, File.ReadAllText(htmldocfile).Replace("checksum=''", "checksum='" + checksum + "'"));
         }
         private void Replace_NameArea(string file, string newText)
         {
@@ -217,7 +219,7 @@ namespace Console_WSA_ProjDoc.HTML
             #region loop em ARQUIVOS- Gera uma tag <a> para cada arquivo encontrado
 
             foreach (var codefile in currentFolder.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
-                .Where(d =>  !d.FullName.ToString().Contains(".vscode")))
+                .Where(d => !d.FullName.ToString().Contains(".vscode")))
             {
                 var href = codefile.Name;
                 href = HtmlFormatters.URLReplace(href) + ".html";
@@ -282,73 +284,47 @@ namespace Console_WSA_ProjDoc.HTML
         private void Replace_History(string file, string originalfilename)
         {
             var f = new FileInfo(originalfilename);
-            var csfile = f.Directory.FullName + @"\" + f.Name.Replace(Xml.Extension, "") + ".#tfvc";
             var currcs = "";
             var csnav = "";
             DateTime currdatetime = DateTime.Now;
-            var cscount = 0;
-            var search = csfile;
 
-
-            if (Xml.TfsHistory == "true" && File.Exists(csfile))
+            if (Xml.TfsHistory == "true")
             {
                 csnav += "						<li class='nav-item'>" + Environment.NewLine;
                 csnav += "							<a class='nav-link' id='history-tab' data-toggle='tab' href='#history' role='tab' aria-controls='history' aria-selected='false'>&Dic:tab_historys&</a>" + Environment.NewLine;
                 csnav += "						</li>";
-                var lines = File.ReadAllText(csfile).Split(new string[] { "\n" },
-                StringSplitOptions.None);
-                var linecounter = 0;
-                var csDatetime = DateTime.Today;
-                var temptitle = "";
-                var tempcomment = "";
-                foreach (var line in lines)
-                {
-                    if (line.Contains("@SHA1: "))
-                    {
-                    }
-                    else if (line.Contains("@CreationDate:"))
-                    {
-                        csDatetime = DateTime.Parse(line.Replace("@CreationDate: ", ""));
-                        if (currcs == "" || csDatetime.ToString("dd/MM/yyyy hh:mm:ss") != currdatetime.ToString("dd/MM/yyyy hh:mm:ss"))
-                        {
-                            if (currcs != "") currcs += "								</li>" + Environment.NewLine; // Fechando já existente
-                            currcs += "								<li class='list-group-item'>" + Environment.NewLine; // Creates a new history group
-                            currdatetime = csDatetime;
-                            cscount = 0;
-                            currcs += "									<div class='text-muted font-weight-bold'>" +
-                               currdatetime.ToString("dddd, dd/MMM/yyyy", new System.Globalization.CultureInfo(Xml.Language)) + ", " + currdatetime.ToString("hh:mm:ss") + ": </div>" + Environment.NewLine;
-                            currcs += "<p></p>" + Environment.NewLine;
 
-                        }
-                    }
-                    else if (line.Contains("@Comment:"))
+                var dbsource = Xml.LocalFolder + "db.sqlite";
+                var SQLiteDb = new Datastore(dbsource);
+                var dt = SQLiteDb.QueryRecord(originalfilename.ToLower().Replace("/", "\\"));
+
+                if (dt.Rows.Count > 0)
+                {
+                    foreach (DataRow row in dt.Rows)
                     {
+                        var Datetime = row["creationdate"];
+
+                        currcs += "								<li class='list-group-item'>" + Environment.NewLine; // Creates a new history group
+                        currcs += "									<div class='text-muted font-weight-bold'>" +
+                           currdatetime.ToString("dddd, dd/MMM/yyyy", new System.Globalization.CultureInfo(Xml.Language)) + ", " + currdatetime.ToString("hh:mm:ss") + "</div>" + Environment.NewLine;
+                        currcs += "<p></p>" + Environment.NewLine;
                         currcs += "									<div class='custom-history'>" + Environment.NewLine;
                         currcs += "										<h6 " +
                             "class='custom-history-title' " +
                             "data-toggle='tooltip' " +
-                            "data-placement='bottom' title='&newTitle&'>" + Environment.NewLine +
+                            "data-placement='bottom' title='&newComment&'>" + Environment.NewLine +
                             "&newComment&" + Environment.NewLine;
-                        tempcomment = line.Replace("@Comment: ", "");
-                        temptitle = tempcomment + Environment.NewLine;
-                    }
-                    else if (line.Contains("@History:"))
-                    {
-                        currcs = currcs.Replace("&newTitle&", temptitle).Replace("&newComment&", tempcomment);
+
+                        currcs = currcs.Replace("&newComment&", row["comment"].ToString());
                         currcs += "										<div class='text-muted font-weight-normal'>" +
-                            "History " + line.Replace("@History: ", "") + "</div>" + Environment.NewLine;
+                           "Changeset " + row["id"].ToString() + ", " + row["creator"].ToString() + "</div>" + Environment.NewLine;
                         currcs += "										</h6>" + Environment.NewLine;
                         currcs += "									</div>" + Environment.NewLine; // History group end
-
+                        currcs += "								</li>";
                     }
-                    else // continuação comentário
-                    {
-                        tempcomment += line;
-                        temptitle += line + Environment.NewLine;
-                    }
-                    cscount++;
                 }
             }
+
             File.WriteAllText(file, File.ReadAllText(file).Replace("&HistoryTab&", csnav));
             File.WriteAllText(file, File.ReadAllText(file).Replace("&HistoryArea&", currcs));
         }
@@ -358,7 +334,7 @@ namespace Console_WSA_ProjDoc.HTML
             var tfsFolder = new DirectoryInfo(Xml.LocalFolder);
             var searchList = "";
             var f = new FileInfo(file);
-            foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Where(d =>  !d.FullName.ToString().Contains(".vscode")))
+            foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Where(d => !d.FullName.ToString().Contains(".vscode")))
             {
                 var searchText = WebUtility.HtmlEncode(Xml.ProjectTitle + @"\" + codefile.FullName.Replace(Xml.LocalFolder, ""));
                 var replace = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectTitle);
@@ -418,8 +394,7 @@ namespace Console_WSA_ProjDoc.HTML
         {
             //
             string CommentBlock = "";
-            string description = "";
-            string wherevar = "";
+
             List<string> exampleslist = new List<string>();
             List<string> obslist = new List<string>();
             List<string> todolist = new List<string>();
@@ -533,7 +508,7 @@ namespace Console_WSA_ProjDoc.HTML
                         {
                             var str = new string[3];
                             currreturn = currreturn.Replace(matchcollection[0].Value, "");
-                            currreturn = (matchcollection.Count > 2) ? currreturn.Replace(matchcollection[1].Value, "") : currreturn.Replace(",","");
+                            currreturn = (matchcollection.Count > 2) ? currreturn.Replace(matchcollection[1].Value, "") : currreturn.Replace(",", "");
                             str[0] = matchcollection[0].Value;
                             str[1] = (matchcollection.Count > 2) ? matchcollection[1].Value : "";
                             str[2] = currreturn; // Descrição = resto do @return que não foi validado pelo RegEx
@@ -684,15 +659,15 @@ namespace Console_WSA_ProjDoc.HTML
             recursivelevel++; // Somente para checar o nível da recursividade da função
 
             if (folder.GetDirectories("*", SearchOption.TopDirectoryOnly)
-                .Any(d =>  !d.FullName.ToString().Contains(".vscode")))
+                .Any(d => !d.FullName.ToString().Contains(".vscode")))
             {
                 foreach (var directory in folder.GetDirectories("*", SearchOption.TopDirectoryOnly)
-                    .Where(d =>  !d.FullName.ToString().Contains(".vscode")))
+                    .Where(d => !d.FullName.ToString().Contains(".vscode")))
                 {
                     Tree += "{";
                     Tree += "text:'" + directory.Name + "'";
                     var dInfo = new DirectoryInfo(directory.FullName);
-                    if (dInfo.GetDirectories("*", SearchOption.TopDirectoryOnly).Count(d =>  !d.FullName.ToString().Contains(".vscode")) != 0)
+                    if (dInfo.GetDirectories("*", SearchOption.TopDirectoryOnly).Count(d => !d.FullName.ToString().Contains(".vscode")) != 0)
                     {
                         Tree += ",nodes:[";
                         Create_Tree(directory.FullName, recursivelevel);
@@ -702,7 +677,7 @@ namespace Console_WSA_ProjDoc.HTML
                     {
                         Tree += ",nodes:[";
                         foreach (var codefile in dInfo.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
-                            .Where(d =>  !d.FullName.ToString().Contains(".vscode")))
+                            .Where(d => !d.FullName.ToString().Contains(".vscode")))
                         {
                             var href = codefile.FullName.Replace(Xml.LocalFolder, "");
                             href = @".\" + HtmlFormatters.URLReplace(href) + ".html";
@@ -715,7 +690,7 @@ namespace Console_WSA_ProjDoc.HTML
                     }
                 }
                 foreach (var codefile in folder.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
-                    .Where(d =>  !d.FullName.ToString().Contains(".vscode")))
+                    .Where(d => !d.FullName.ToString().Contains(".vscode")))
                 {
                     var href = codefile.FullName.Replace(Xml.LocalFolder, "");
                     href = @".\" + HtmlFormatters.URLReplace(href) + ".html";

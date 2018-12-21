@@ -1,44 +1,40 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net;
 using Console_WSA_ProjDoc.General;
 using Console_WSA_ProjDoc.XML;
+using Console_WSA_ProjDoc.SQLite;
 using Microsoft.TeamFoundation;
 using Microsoft.TeamFoundation.Client;
+using Microsoft.TeamFoundation.Framework.Client;
+using Microsoft.TeamFoundation.Framework.Common;
 using Microsoft.TeamFoundation.VersionControl.Client;
+using static Console_WSA_ProjDoc.SQLite.Datastore;
+using System.Collections.Generic;
 
 namespace Console_WSA_ProjDoc.TFS
 {
-    public class TFVCDownloader
+    public class TFVC
     {
         private static readonly Logging Logging = new Logging();
-        private static readonly string Workspacename = "WorkspaceName";
-        private static BasicAuthCredential _basicCred;
-        private static TfsClientCredentials _TFVCcred;
-        private static TfsTeamProjectCollection _TFVC;
+        private static readonly string Workspacename = Environment.UserName + "_" + Environment.MachineName;
+        private TfsConfigurationServer _TFVC;
+        private XmlConfigs.Xml Xml;
+        internal History History { get; private set; }
 
-        private NetworkCredential _netCred;
+        public TFVC(XmlConfigs.Xml xml) => this.Xml = xml;
 
-        /* AO UTILIZAR SERVIDOR PROXY, CERTIFICAR QUE O MESMO ESTÁ DISPONÍVEL PARA USO.
-         * CASO HAJA INDISPONIBILIDADE, a autenticação e WorkItemStore ficarão travados*/
-        private XmlConfigs.Xml Xml { get; set; } = new XmlConfigs.Xml();
-
-        public void LoadXml(XmlConfigs.Xml xml)
+        public bool GetProject(int nId)
         {
-            this.Xml = xml;
-        }
-
-        public bool GetProject(int nId, bool changesets)
-        {
-            var getProjectOk = false;
+            var TFSOk = false;
             try
             {
-                getProjectOk = ConnectTfs();
-                if (getProjectOk) getProjectOk = DownloadTFVCFromTFS();
-                if (getProjectOk && changesets) getProjectOk = DownloadTFVCChangesets();
+                TFSOk = Connect();
+                if (TFSOk) TFSOk = UpdateProject();
 
-                getProjectOk = true;
+                TFSOk = true;
             }
             catch (TeamFoundationServiceUnavailableException e)
             {
@@ -47,7 +43,7 @@ namespace Console_WSA_ProjDoc.TFS
             catch (TeamFoundationServerUnauthorizedException e)
             {
                 Logging.WriteLog(
-                    "An TFS Authentication has occurred. 1) Make sure that the Server URL, Username and Password are correct; " +
+                    "An TFS Authentication has occurred. 1) Make sure that the Server URL and Username are correct; " +
                     "2) Make sure that the 'Alternate Authentication Credentials' was enabled in the server page; 3) If there is a Proxy Server, try to deactivate it: \n" +
                     e.Message);
             }
@@ -59,40 +55,43 @@ namespace Console_WSA_ProjDoc.TFS
             }
             catch (IOException e)
             {
-                Logging.WriteLog("An I/O Exception has occurred during the TFS Authentitcation: \n" + e);
+                Logging.WriteLog("An I/O Exception has occurred during the TFS Authentication: \n" + e);
             }
             catch (Exception e)
             {
-                if (e.Message.Contains("TF14044") || e.Message.Contains("TF204017"))
+                if(e.Message.Contains("TF14045"))
+                {
+                    Logging.WriteLog("ERROR: sure that the user inside the <username> tag is a " + Xml.TfsProjectName + " Member and contains the CreateWorkspace Global Permission.");
+                }
+                else if (e.Message.Contains("TF14044") || e.Message.Contains("TF204017"))
                 {
                     Logging.WriteLog("ERROR: User has no sufficient permissions to manage workspace. Please, try to access the following URL and check if the user is a member of a group that has 'Create a new workspace' permission allowed:" +
-                        Xml.TfsServerUrl + ((Xml.TfsServerUrl.ToString().Last().ToString() == "m") ? "/" : "") + "DefaultCollection/_settings/security" + " \n" + e);
+                        Xml.TfsServerUrl + ((Xml.TfsServerUrl.ToString().Last().ToString() == "m") ? "/" : "") + "DefaultCollection/_settings/security");
                 }
-                else Logging.WriteLog("An Exception has occurred during the TFS Operations: \n" + e);
+                else Logging.WriteLog("An Exception has occurred during the TFS Operations.");
+                throw e;
             }
             finally
             {
-                if (!getProjectOk)
+                if (!TFSOk)
                 {
-                    Logging.WriteLog("FATAL ERROR. THE EXECUTION WILL BE STOPPED");
+                    Logging.WriteLog("FATAL TFS ERROR. THE EXECUTION WILL BE STOPPED");
                     Environment.Exit(0);
                 }
             }
-            return getProjectOk;
+            return TFSOk;
         }
 
-        private bool ConnectTfs()
+        private bool Connect()
         {
             var breturn = false;
 
             #region Tentativa de conexão ao TFS
 
             Logging.WriteLog("Starting the TFS Server Connection...");
-            _netCred = new NetworkCredential(Xml.TfsUsername, Xml.TfsPassword);
 
-            _basicCred = new BasicAuthCredential(_netCred);
-            _TFVCcred = new TfsClientCredentials(_basicCred) { AllowInteractive = false };
-            _TFVC = new TfsTeamProjectCollection(new Uri(Xml.TfsServerUrl), _netCred);
+            _TFVC = TfsConfigurationServerFactory.GetConfigurationServer(new Uri(Xml.TfsServerUrl));
+
             _TFVC.EnsureAuthenticated();
 
             breturn = true;
@@ -102,105 +101,113 @@ namespace Console_WSA_ProjDoc.TFS
             return breturn;
         }
 
-        private bool DownloadTFVCFromTFS()
+        private bool UpdateProject()
         {
-            var breturn = false;
+            var downloaded = false;
+            var dbsource = Xml.LocalFolder + "db.sqlite";
+            Datastore SQLiteDb = new Datastore(dbsource);
+            SQLiteDb.DbCreation();
 
-            Logging.WriteLog("Currend Instance ID: " + _TFVC.InstanceId);
-            Logging.WriteLog("Configuring Workspace...");
+            Logging.WriteLog("Instance ID: " + _TFVC.InstanceId);
 
-            var versioncontrols = (VersionControlServer)_TFVC.GetService(typeof(VersionControlServer));
-            var workspace = versioncontrols.QueryWorkspaces(Workspacename, Xml.TfsUsername, Environment.MachineName)
-                .SingleOrDefault();
+            // Get the catalog of team project collections
+            ReadOnlyCollection<CatalogNode> collectionNodes = _TFVC.CatalogNode.QueryChildren(
+                new[] { CatalogResourceTypes.ProjectCollection },
+                false, CatalogQueryOptions.None);
 
-            if (workspace == null) workspace = versioncontrols.CreateWorkspace(Workspacename, Xml.TfsUsername);
-            if (workspace.MappingsAvailable == false) workspace.CreateMapping(new WorkingFolder(Xml.TfsProjectName, Xml.LocalFolder));
-
-            if (!Directory.Exists(Xml.LocalFolder)) Directory.CreateDirectory(Xml.LocalFolder);
-
-            Logging.WriteLog("Starting the Project Download: " + Xml.TfsProjectName + "...");
-            workspace.Get();
-            Logging.WriteLog("Download statis: CONCLUDED.");
-
-            breturn = true;
-            return breturn;
-        }
-
-        private bool DownloadTFVCChangesets()
-        {
-            var breturn = false;
-            var d = new DirectoryInfo(Xml.LocalFolder);
-            var vcs = (VersionControlServer)_TFVC.GetService(typeof(VersionControlServer));
-            var tp = vcs.GetTeamProject(Xml.TfsProjectName.Replace("$/", ""));
-            var path = "";
-            var serveritem = tp.ServerItem;
-            var folderstring = "";
-            var counter = 0;
-            var current = 0;
-
-            Logging.WriteLog("Starting the Changesets update...");
-
-            #region identificar ID do último changeset realizado
-            var changes = vcs.QueryHistory(serveritem, VersionSpec.Latest, 0, RecursionType.Full, null,
-                VersionSpec.Latest, VersionSpec.Latest, int.MaxValue, true, true, false, false);
-            var latest = changes.Cast<Changeset>().First();
-            var id = latest.ChangesetId;
-            #endregion
-
-            #region criar registro .#tfvc dos arquivos
-            Logging.WriteLog("Creating .#tfvc files...");
-            Logging.WriteLog("");
-            current = 0;
-            counter = d.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Length;
-            foreach (var file in d.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories))
+            // List the team project collections
+            foreach (CatalogNode collectionNode in collectionNodes)
             {
-                current++;
-                Logging.WriteLog(current + " of " + counter + " changesets processed.", true);
-                if (!file.FullName.Contains("$"))
+                // Use the InstanceId property to get the team project collection
+                Guid collectionId = new Guid(collectionNode.Resource.Properties["InstanceId"]);
+                TfsTeamProjectCollection teamProjectCollection = _TFVC.GetTeamProjectCollection(collectionId);
+                Logging.WriteLog("Collection: " + teamProjectCollection.Name);
+
+                ReadOnlyCollection<CatalogNode> projectNodes = collectionNode.QueryChildren(
+                    new[] { CatalogResourceTypes.TeamProject },
+                    false, CatalogQueryOptions.None);
+
+                // List the team projects in the collection
+                foreach (CatalogNode projectNode in projectNodes)
                 {
-                    // Se não existe o arquivo texto do changeset, cria arquivo texto e inputa histórico do changeset
-                    path = file.DirectoryName + @"\" + file.Name.Replace(file.Extension, "") + ".#tfvc";
-                    if (!File.Exists(path)) // Se o arquivo não existir, baixa o changeset do mesmo.
+                    if (projectNode.Resource.DisplayName == Xml.TfsProjectName)
                     {
-                        File.WriteAllText(path, "@SHA1: " + Environment.NewLine); // Salva a primeira linha para que o Hash SHA1 seja gravado através da classe FileHash
-                    }
-                    else
-                    {
-                        var fileContent = File.ReadLines(path).ToList();
-                        File.WriteAllText(path, fileContent[0] + Environment.NewLine); // Salva apenas o conteúdo da primeira linha, que contém o último hash. Será utilizado para comparar se houve modificação no conteúdo do arquivo
-                    }
-                    if (Xml.TfsHistory == "true")
-                    {
-                        folderstring = file.FullName.Replace(Xml.LocalFolder, "").Replace("\\", "/");
-                        var changesetpath = tp.ServerItem + "/" + folderstring;
+                        downloaded = true;
+                        Logging.WriteLog("Team Project: " + projectNode.Resource.DisplayName);
+                        VersionControlServer versionControl = (VersionControlServer)teamProjectCollection.GetService(typeof(VersionControlServer));
+                        Workspace ws = versionControl.QueryWorkspaces(Workspacename, null, Environment.MachineName).SingleOrDefault();
 
-                        changes = vcs.QueryHistory(
-                            changesetpath,
-                            VersionSpec.Latest,
-                            0,
-                            RecursionType.Full,
-                            null,
-                            VersionSpec.ParseSingleSpec("C001", null), // Primeiro changeset
-                            VersionSpec.ParseSingleSpec("C" + id, null), // Último changeset
-                            int.MaxValue,
-                            true,
-                            false);
-                    }
-                    foreach (Changeset change in changes)
-                    {
-                        var texto = "";
-                        texto = "@CreationDate: " + change.CreationDate + Environment.NewLine;
-                        texto += "@Comment: " + change.Comment + Environment.NewLine;
-                        texto += "@History: " + "#" + change.ChangesetId + ", " + change.CommitterDisplayName + Environment.NewLine;
+                        if (ws == null)
+                        {
+                            Logging.WriteLog("There is no workspace for " + Environment.MachineName);
+                            ws = versionControl.CreateWorkspace(Workspacename, Xml.TfsUsername);
+                            Logging.WriteLog("Workspace " + Workspacename + " Creation Status: CONCLUDED.");
+                        }
+                        if (ws.MappingsAvailable == false)
+                        {
+                            Logging.WriteLog("There is no workspace for " + Workspacename);
+                            ws.CreateMapping(new WorkingFolder(Xml.TfsProjectName, Xml.LocalFolder));
+                            Logging.WriteLog("Workspace " + Workspacename + " Mapping Status: CONCLUDED.");
+                        }
 
-                        File.AppendAllText(path, texto);
+                        if (!Directory.Exists(Xml.LocalFolder)) Directory.CreateDirectory(Xml.LocalFolder);
+
+                        Logging.WriteLog("Workspace " + Workspacename);
+                        Logging.WriteLog("Downloading Updated files at: " + Xml.LocalFolder);
+                        Logging.WriteLog("All folders and files inside the $/" + Xml.TfsProjectName + " path will be downloaded.");
+
+                        if (Xml.TfsHistory == "true")
+                        {
+                            Logging.WriteLog("The <history> tag IS set as 'true'. The History SQLite database will be created at " + dbsource);
+                        }
+                        else Logging.WriteLog("The <history> tag IS NOT set as 'true'. The History will not be Download and Documented.");
+
+                        var previousdirectory = "";
+                        Logging.WriteLog("");
+                        foreach (Item item in
+    versionControl.GetItems("$/" + Xml.TfsProjectName, VersionSpec.Latest, RecursionType.Full, DeletedState.NonDeleted, ItemType.Any, true).Items)
+                        {
+                            string targetFile = Path.Combine(Xml.LocalFolder, item.ServerItem.Substring(2));
+                            if (item.ItemType == ItemType.Folder && targetFile != previousdirectory)
+                            {
+                                Logging.WriteLog(("Downloading: " + item.ServerItem), true);
+                                previousdirectory = targetFile;
+                            }
+                            if (item.ItemType == ItemType.Folder && !Directory.Exists(targetFile)) Directory.CreateDirectory(targetFile);
+
+                            else if (item.ItemType == ItemType.File)
+                            {
+                                item.DownloadFile(targetFile);
+                                if (Xml.TfsHistory == "true")
+                                {
+                                    var changesetList = versionControl.QueryHistory(item.ServerItem, VersionSpec.Latest, 0,
+                                        RecursionType.Full, null, null, null, Int32.MaxValue, false, false);
+
+                                    foreach (Changeset changeset in changesetList)
+                                    {
+                                        // Adding every history record in the temporarly sqlite file:
+                                        History = new History
+                                        {
+                                            File = targetFile.ToLower().Replace("/", "\\"),
+                                            Id = changeset.ChangesetId,
+                                            CreationDate = changeset.CreationDate,
+                                            Creator = changeset.CommitterDisplayName,
+                                            Comment = changeset.Comment
+                                        };
+
+                                        SQLiteDb.AddRecord(History);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
-            #endregion
 
-            breturn = true;
-            return breturn;
+            if (downloaded) Logging.WriteLog("Project Download Status: CONCLUDED", true);
+            else Logging.WriteLog("It was not possible to download the project. Please, confirm that the serverurl, projectname and username are correct.");
+
+            return downloaded = true;
         }
     }
 }

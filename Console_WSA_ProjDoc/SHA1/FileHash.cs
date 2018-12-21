@@ -3,27 +3,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Console_WSA_ProjDoc.SHA1
 {
     class FileHash
     {
-        public bool CompareHash(string originalfilename, string NewSHA1, string extension)
+        public bool CompareHash(string htmlfile, string SHA1)
         {
-            bool Modified = true;
-            string csfile = originalfilename.ToLower().Replace(extension, "") + ".#tfvc";
-            if (File.Exists(csfile)) // Se o existir, grava chave SHA1 concatenada
-            {
-                var fileContent = File.ReadLines(csfile).ToList();
-                if (fileContent[0].Contains("@SHA1: ") && fileContent[0].Replace("@SHA1: ", "") == NewSHA1) Modified = false; // Não houveram modificações
-                else // Houveram modificações. Atualiza arquivo #tfvc com o novo hash
-                {
-                    fileContent[0] = "@SHA1: " + NewSHA1; // Atualiza a chave SHA1 do arquivo
-                    File.WriteAllLines(csfile, fileContent);
-                }
-            }
-            return Modified;
+            var regexPattern = "(?<=checksum=').*?(?=')"; // SHA1 content inside the checksum HTML meta tag
+            var Text = File.ReadAllText(htmlfile);
+            var regex = new Regex(regexPattern, RegexOptions.Singleline);
+            var match = regex.Match(Text);
+            
+            return (match.Success && match.Value == SHA1) ? false : true;
         }
     }
 }

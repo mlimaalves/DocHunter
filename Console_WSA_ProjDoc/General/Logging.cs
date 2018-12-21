@@ -2,16 +2,17 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Console_WSA_ProjDoc.XML;
+using System.Reflection;
 
 namespace Console_WSA_ProjDoc.General
 {
     public class Logging
     {
-        private static readonly XmlConfigs.Xml Xml = new XmlConfigs.Xml();
-        private static readonly string Logfile = Xml.AssemblyFolder + "console.log";
+        private static readonly string Assemblyfolder =
+          Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\";
+        private static readonly string Logfile = Assemblyfolder + "console.log";
 
-        public void WriteLog(string texto, bool carriage = false)
+        public static void WriteLog(string texto, bool carriage = false)
         {
             var now = DateTime.Now;
             var date = "[" + now.ToString("MM/dd/yyyy") + " - " + now.ToString("HH:mm:ss") + "] ";
@@ -39,7 +40,7 @@ namespace Console_WSA_ProjDoc.General
                     Console.Write(new string(' ', Console.WindowWidth));
                     Console.SetCursorPosition(0, currentLineCursor);
                     //
-                    Console.Write( texto);
+                    Console.Write(texto);
                 }
             }
             catch (Exception e)

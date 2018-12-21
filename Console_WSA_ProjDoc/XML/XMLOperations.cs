@@ -54,10 +54,12 @@ namespace Console_WSA_ProjDoc.XML
         {
             var creturn = "";
             var xmLtype = "";
-            var typelist = new List<string>();
-            /* tipos de project válidos para criar documentação */
-            typelist.Add("tfvc");
-            typelist.Add("local");
+            var typelist = new List<string>
+            {
+                // project types that are valid to create a Documentation:
+                "tfvc",
+                "local"
+            };
 
             if (nId > 0)
                 xmLtype = _xmlSettings.DocumentElement.SelectSingleNode("/configurations/projects/project[@nId='" + nId + "']")

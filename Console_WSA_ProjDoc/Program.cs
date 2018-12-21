@@ -14,11 +14,11 @@ namespace Console_WSA_ProjDoc
 {
     internal class Program : ServiceBase
     {
-        private static TFVCDownloader TFVCDownloader = new TFVCDownloader();
+        private static TFVC TFVC;
         //private static ExecuteQuery Azure_DevOps = new ExecuteQuery();
         private static readonly XmlConfigs.Xml Xml = new XmlConfigs.Xml();
         private static readonly Logging Logging = new Logging();
-
+        
         public Program()
         {
             ServiceName = Xml.ServiceName;
@@ -58,8 +58,8 @@ namespace Console_WSA_ProjDoc
                                 if (projecttype == "tfvc")
                                 {
                                     Xml.GetTfsElements(projects);
-                                    TFVCDownloader.LoadXml(Xml);
-                                    TFVCDownloader.GetProject(projects, Xml.TfsHistory == "true");
+                                    TFVC = new TFVC(Xml);
+                                    TFVC.GetProject(projects);
                                 }
                                 else if (projecttype == "local")
                                 {
@@ -88,7 +88,7 @@ namespace Console_WSA_ProjDoc
                 }
                 catch (System.Xml.XmlException e)
                 {
-                    Logging.WriteLog(@"An XML Exception occurred during the current execution: " + e);
+                    Logging.WriteLog(@"A XML Exception occurred during the current execution: " + e);
                 }
                 catch (Exception e)
                 {

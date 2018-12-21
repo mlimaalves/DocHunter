@@ -2,10 +2,12 @@
 {
     public class XmlConfigs
     {
-        private static readonly XmlOperations XmlOperations = new XmlOperations();
+        private static XmlOperations XmlOperations = new XmlOperations();
 
         public class Xml
         {
+            private const string projectelement = "/configurations/projects/project[@nId='";
+
             // Controle do XML dinâmico:
             public System.Collections.Generic.List<string[]> DictionaryList { get; set; }
             public System.Collections.Generic.List<string[]> RegexList { get; set; }
@@ -28,7 +30,6 @@
             public string TfsServerUrl { get; set; }
             public string TfsProjectName { get; set; }
             public string TfsUsername { get; set; }
-            public string TfsPassword { get; set; }
             public string TfsHistory { get; set; }
 
             //
@@ -36,7 +37,6 @@
             public string HtmlFolder { get; set; }
             public string LocalFolder { get; set; }
             public string DeleteFiles { get; set; }
-            public string CallIndex { get; set; }
             public string Language { get; set; }
             public string Extension { get; set; }
             public string ProgrammingLanguage { get; set; }
@@ -50,62 +50,53 @@
             public void GetTfsElements(int nId)
             {
                 ProjectTitle =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/title", true);
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/title", true);
                 TfsServerUrl =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/tfvc/serverurl", true);
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/tfvc/serverurl", true);
                 TfsProjectName =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/tfvc/name", true);
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/tfvc/name", true);
                 TfsUsername =
                     XmlOperations.GetXmlElements(
-                        "/configurations/projects/project[@nId='" + nId + "']/tfvc/networkcredential/username", true);
-                TfsPassword =
-                    XmlOperations.GetXmlElements(
-                        "/configurations/projects/project[@nId='" + nId + "']/tfvc/networkcredential/password", true);
+                        projectelement + nId + "']/tfvc/networkcredential/username", true);
                 TfsHistory =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/tfvc/history").ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/tfvc/history").ToLower();
                 //
                 HtmlFolder =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/html/htmlfolder", true).ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/html/htmlfolder", true).ToLower();
                 HtmlFolder = (HtmlFolder.Substring(HtmlFolder.Length - 1) == @"\") ? HtmlFolder : HtmlFolder + @"\";
                 LocalFolder =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/localfolder", true).ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/localfolder", true).ToLower();
                 LocalFolder = (LocalFolder.Substring(LocalFolder.Length - 1) == @"\") ? LocalFolder : LocalFolder + @"\";
                 DeleteFiles =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/deletefiles").ToLower();
-                DeleteFiles = (DeleteFiles == null) ? "false" : DeleteFiles;
-                CallIndex =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/callindex").ToLower();
-                CallIndex = (CallIndex == null) ? "false" : CallIndex;
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/deletefiles").ToLower();
+                DeleteFiles = (DeleteFiles == "") ? "false" : DeleteFiles;
                 Language =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/language", true).ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/language", true).ToLower();
                 Extension =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/extension", true).ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/extension", true).ToLower();
                 ProgrammingLanguage =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/programminglanguage", true).ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/programminglanguage", true).ToLower();
             }
 
             public void GetLocalElements(int nId)
             {
                 ProjectTitle =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/title", true);
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/title", true);
                 HtmlFolder =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/html/htmlfolder",true).ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/html/htmlfolder", true).ToLower();
                 HtmlFolder = (HtmlFolder.Substring(HtmlFolder.Length - 1) == @"\") ? HtmlFolder : HtmlFolder + @"\";
                 LocalFolder =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/localfolder", true).ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/localfolder", true).ToLower();
                 LocalFolder = (LocalFolder.Substring(LocalFolder.Length - 1) == @"\") ? LocalFolder : LocalFolder + @"\";
                 DeleteFiles =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/deletefiles").ToLower();
-                DeleteFiles = (DeleteFiles == null) ? "false" : DeleteFiles;
-                CallIndex =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/callindex").ToLower();
-                CallIndex = (CallIndex == null) ? "true" : CallIndex;
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/deletefiles").ToLower();
+                DeleteFiles = (DeleteFiles == "") ? "false" : DeleteFiles;
                 Language =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/language",true).ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/language", true).ToLower();
                 Extension =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/extension", true).ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/extension", true).ToLower();
                 ProgrammingLanguage =
-                    XmlOperations.GetXmlElements("/configurations/projects/project[@nId='" + nId + "']/programminglanguage", true).ToLower();
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/programminglanguage", true).ToLower();
             }
             public void LoadDictionaryList() => DictionaryList = XmlOperations.GetDictionaryList(Language);
 
