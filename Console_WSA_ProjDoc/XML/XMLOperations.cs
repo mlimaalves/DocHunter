@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Xml;
-using Console_WSA_ProjDoc.General;
+using RegexDocs.General;
 
-namespace Console_WSA_ProjDoc.XML
+namespace RegexDocs.XML
 {
     public class XmlOperations
     {

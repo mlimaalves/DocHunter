@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace Console_WSA_ProjDoc.General
+namespace RegexDocs.General
 {
     public class Logging
     {

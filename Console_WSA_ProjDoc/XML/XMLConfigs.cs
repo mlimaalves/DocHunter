@@ -1,4 +1,4 @@
-﻿namespace Console_WSA_ProjDoc.XML
+﻿namespace RegexDocs.XML
 {
     public class XmlConfigs
     {

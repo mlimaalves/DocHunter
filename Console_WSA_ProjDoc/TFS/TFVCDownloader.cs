@@ -3,18 +3,18 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net;
-using Console_WSA_ProjDoc.General;
-using Console_WSA_ProjDoc.XML;
-using Console_WSA_ProjDoc.SQLite;
+using RegexDocs.General;
+using RegexDocs.XML;
+using RegexDocs.SQLite;
 using Microsoft.TeamFoundation;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.Framework.Client;
 using Microsoft.TeamFoundation.Framework.Common;
 using Microsoft.TeamFoundation.VersionControl.Client;
-using static Console_WSA_ProjDoc.SQLite.Datastore;
+using static RegexDocs.SQLite.Datastore;
 using System.Collections.Generic;
 
-namespace Console_WSA_ProjDoc.TFS
+namespace RegexDocs.TFS
 {
     public class TFVC
     {
@@ -102,7 +102,7 @@ namespace Console_WSA_ProjDoc.TFS
         }
 
         private bool UpdateProject()
-        {
+        {   
             var downloaded = false;
             var dbsource = Xml.LocalFolder + "db.sqlite";
             Datastore SQLiteDb = new Datastore(dbsource);
@@ -149,8 +149,6 @@ namespace Console_WSA_ProjDoc.TFS
                             ws.CreateMapping(new WorkingFolder(Xml.TfsProjectName, Xml.LocalFolder));
                             Logging.WriteLog("Workspace " + Workspacename + " Mapping Status: CONCLUDED.");
                         }
-
-                        if (!Directory.Exists(Xml.LocalFolder)) Directory.CreateDirectory(Xml.LocalFolder);
 
                         Logging.WriteLog("Workspace " + Workspacename);
                         Logging.WriteLog("Downloading Updated files at: " + Xml.LocalFolder);

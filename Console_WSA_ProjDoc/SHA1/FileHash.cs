@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Console_WSA_ProjDoc.SHA1
+namespace RegexDocs.SHA1
 {
     class FileHash
     {

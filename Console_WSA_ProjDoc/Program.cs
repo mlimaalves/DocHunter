@@ -5,12 +5,12 @@ using System.IO;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
-using Console_WSA_ProjDoc.General;
-using Console_WSA_ProjDoc.HTML;
-using Console_WSA_ProjDoc.TFS;
-using Console_WSA_ProjDoc.XML;
+using RegexDocs.General;
+using RegexDocs.HTML;
+using RegexDocs.TFS;
+using RegexDocs.XML;
 
-namespace Console_WSA_ProjDoc
+namespace RegexDocs
 {
     internal class Program : ServiceBase
     {
@@ -58,8 +58,9 @@ namespace Console_WSA_ProjDoc
                                 if (projecttype == "tfvc")
                                 {
                                     Xml.GetTfsElements(projects);
+                                    if (!Directory.Exists(Xml.LocalFolder)) Directory.CreateDirectory(Xml.LocalFolder);
                                     TFVC = new TFVC(Xml);
-                                    TFVC.GetProject(projects);
+                                    TFVC.GetProject(projects);                                    
                                 }
                                 else if (projecttype == "local")
                                 {
@@ -68,6 +69,8 @@ namespace Console_WSA_ProjDoc
                                 else UpdateHTML = false;
                                 if (UpdateHTML)
                                 {
+                                    if (!Directory.Exists(Xml.HtmlFolder)) Directory.CreateDirectory(Xml.HtmlFolder);
+
                                     // Mudança de Idioma
                                     Thread.CurrentThread.CurrentUICulture = new CultureInfo(Xml.Language);
                                     Xml.LoadDictionaryList();

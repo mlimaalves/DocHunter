@@ -1,4 +1,4 @@
-﻿using Console_WSA_ProjDoc.General;
+﻿using RegexDocs.General;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Console_WSA_ProjDoc.SQLite
+namespace RegexDocs.SQLite
 {
     class Datastore
     {

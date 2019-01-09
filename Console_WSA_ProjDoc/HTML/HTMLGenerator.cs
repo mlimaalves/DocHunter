@@ -6,14 +6,14 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using Console_WSA_ProjDoc.CSS;
-using Console_WSA_ProjDoc.General;
-using Console_WSA_ProjDoc.XML;
-using Console_WSA_ProjDoc.SHA1;
-using Console_WSA_ProjDoc.SQLite;
+using RegexDocs.CSS;
+using RegexDocs.General;
+using RegexDocs.XML;
+using RegexDocs.SHA1;
+using RegexDocs.SQLite;
 using System.Data;
 
-namespace Console_WSA_ProjDoc.HTML
+namespace RegexDocs.HTML
 {
     public class HtmlGenerator
     {
@@ -291,7 +291,7 @@ namespace Console_WSA_ProjDoc.HTML
             if (Xml.TfsHistory == "true")
             {
                 csnav += "						<li class='nav-item'>" + Environment.NewLine;
-                csnav += "							<a class='nav-link' id='history-tab' data-toggle='tab' href='#history' role='tab' aria-controls='history' aria-selected='false'>&Dic:tab_historys&</a>" + Environment.NewLine;
+                csnav += "							<a class='nav-link' id='history-tab' data-toggle='tab' href='#history' role='tab' aria-controls='history' aria-selected='false'>&Dic:tab_history&</a>" + Environment.NewLine;
                 csnav += "						</li>";
 
                 var dbsource = Xml.LocalFolder + "db.sqlite";

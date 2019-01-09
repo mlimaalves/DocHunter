@@ -1,10 +1,10 @@
 ﻿using System.IO;
 using System.Reflection;
-using Console_WSA_ProjDoc.General;
-using Console_WSA_ProjDoc.HTML;
-using Console_WSA_ProjDoc.XML;
+using RegexDocs.General;
+using RegexDocs.HTML;
+using RegexDocs.XML;
 
-namespace Console_WSA_ProjDoc.CSS
+namespace RegexDocs.CSS
 {
     internal class CssGenerator
     {

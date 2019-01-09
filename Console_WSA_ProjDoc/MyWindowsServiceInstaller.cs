@@ -2,7 +2,7 @@
 using System.Configuration.Install;
 using System.ServiceProcess;
 
-namespace Console_WSA_ProjDoc
+namespace RegexDocs
 {
     [RunInstaller(true)]
     public class MyWindowsServiceInstaller : Installer

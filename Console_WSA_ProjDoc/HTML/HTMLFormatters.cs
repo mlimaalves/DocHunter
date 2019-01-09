@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Console_WSA_ProjDoc.HTML
+namespace RegexDocs.HTML
 {
     static class HtmlFormatters
     {
