@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.12
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegexDocs", "Console_WSA_ProjDoc\RegexDocs.csproj", "{9761D387-BF91-4C48-B6E0-FF8BE6189AB0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegexDocs", "RegexDocs\RegexDocs.csproj", "{9761D387-BF91-4C48-B6E0-FF8BE6189AB0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
