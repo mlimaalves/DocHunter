@@ -28,7 +28,7 @@ This repository development is frozen for now, waiting for new suggestions or Is
 
 Quick started for developers
 ----------------------------
-* Click here for the Wiki page.
+* Click [here](https://github.com/mlimaalves/RegexDocs/wiki/%5BEnglish%5D-Introduction) for the Wiki page.
 
 
 Currently known errors
