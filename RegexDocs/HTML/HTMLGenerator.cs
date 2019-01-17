@@ -23,6 +23,8 @@ namespace RegexDocs.HTML
         private static readonly string Assemblyfolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\";
         private string Tree = "";
         private string CodeErrorList = "";
+        private string searchList = "";
+        private string searchFolder = "";
         public void LoadXml(XmlConfigs.Xml xml) => this.Xml = xml;
 
         public bool Start()
@@ -85,7 +87,7 @@ namespace RegexDocs.HTML
             Replace_NameArea(htmlfile, Xml.ProjectTitle);
             Replace_ButtonArea(Xml.LocalFolder, htmlfile);
             Replace_FileProtocolArea(htmlfile);
-            Replace_SearchArea(htmlfile);
+            Replace_SearchArea(htmlfile, true);
             Replace_BreadcrumbArea(htmlfile, htmlfile);
             Replace_Dictionary(htmlfile);
 
@@ -124,7 +126,8 @@ namespace RegexDocs.HTML
                     Replace_NameArea(htmlfile, Xml.ProjectTitle);
                     Replace_FileNameArea(htmlfile, codefile.Name);
                     Replace_FileProtocolArea(htmlfile);
-                    Replace_SearchArea(htmlfile);
+                    FileInfo f = new FileInfo(htmlfile);
+                    Replace_SearchArea(htmlfile, f.Directory.FullName.ToLower() != searchFolder, f.Directory.FullName);
                     Replace_BreadcrumbArea(htmlfile, originalfilename);
                     RegExDocumentation(htmlfile, codefile.FullName);
                     RegExCode(htmlfile, codefile.FullName);
@@ -329,25 +332,29 @@ namespace RegexDocs.HTML
             File.WriteAllText(file, File.ReadAllText(file).Replace("&HistoryArea&", currcs));
         }
 
-        private void Replace_SearchArea(string file)
+        private void Replace_SearchArea(string file, bool newSearchList, string newFolder = "")
         {
             var tfsFolder = new DirectoryInfo(Xml.LocalFolder);
-            var searchList = "";
             var f = new FileInfo(file);
-            foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Where(d => !d.FullName.ToString().Contains(".vscode")))
+            if (newSearchList)
             {
-                var searchText = WebUtility.HtmlEncode(Xml.ProjectTitle + @"\" + codefile.FullName.Replace(Xml.LocalFolder, ""));
-                var replace = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectTitle);
-                string[] split = f.Directory.FullName.Replace(replace, "").Split(Path.DirectorySeparatorChar);
-                var goback = string.Concat(Enumerable.Repeat("../", split.Length - 1));
-                var href = codefile.FullName.Replace(Xml.LocalFolder, "");
-                href = goback + HtmlFormatters.URLReplace(href) + ".html";
-                searchList += "			    	<li " +
-                              "class='nav-item text-right'><a " +
-                              "class='search-item nav-link a-custom-main' " +
-                              "href='" + href + "'>" +
-                              searchText +
-                              "</a></li>" + Environment.NewLine;
+                searchList = "";
+                searchFolder = newFolder.ToLower();
+                foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Where(d => !d.FullName.ToString().Contains(".vscode")))
+                {
+                    var searchText = WebUtility.HtmlEncode(Xml.ProjectTitle + @"\" + codefile.FullName.Replace(Xml.LocalFolder, ""));
+                    var replace = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectTitle);
+                    string[] split = f.Directory.FullName.Replace(replace, "").Split(Path.DirectorySeparatorChar);
+                    var goback = string.Concat(Enumerable.Repeat("../", split.Length - 1));
+                    var href = codefile.FullName.Replace(Xml.LocalFolder, "");
+                    href = goback + HtmlFormatters.URLReplace(href) + ".html";
+                    searchList += "			    	<li " +
+                                  "class='nav-item text-right'><a " +
+                                  "class='search-item nav-link a-custom-main' " +
+                                  "href='" + href + "'>" +
+                                  searchText +
+                                  "</a></li>" + Environment.NewLine;
+                }
             }
             File.WriteAllText(file, File.ReadAllText(file).Replace("&searchArea&", searchList));
         }

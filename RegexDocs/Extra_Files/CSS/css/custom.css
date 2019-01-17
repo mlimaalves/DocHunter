@@ -1,0 +1,65 @@
+.highlight {
+	color:#33393f;
+	font-weight:bold;
+	text-decoration:underline;
+}
+.search-item {
+	background-color:#ffffff;
+}
+.search-item:hover {
+	background-color:#f7f4fb;
+}
+.far.fa-custom {
+	/*color:#ffffff;*/
+	color:#33393f;
+	margin-right:3px;
+}
+.a-custom-main {
+	color:#33393f;
+	font-size:small;
+}
+.a-custom-main:hover {
+	color:#33393f;
+}
+.a-custom-main:hover .far.fa-custom {
+	color:#33393f;
+}
+.btn.btn-custom-main {
+	background-color:#33393f;
+	border-color:#33393f;
+}
+.custom-toggler {
+	width:60px;
+	margin-right:8px;
+}
+/* ul - remover bullets das sublistas*/
+ul { 
+  list-style: none;
+}
+.tooltip-inner {
+    white-space:pre-wrap;
+	max-width:none;
+}
+
+.custom-description{
+	padding-left:1em;
+}
+.custom-card-text{
+	margin-top:-10px;
+}
+.custom-arrow-toggle .fas.fa-caret-up,
+.custom-arrow-toggle.collapsed .fas.fa-caret-down {
+    display: inline-block;
+}
+.custom-arrow-toggle.collapsed .fas.fa-caret-up,
+.custom-arrow-toggle .fas.fa-caret-down {
+    display: none;
+}
+.custom-history-title{
+	text-overflow: ellipsis;
+overflow: hidden; 
+white-space: nowrap;
+}
+.custom-history:hover{
+	background-color:#ebebeb;
+}

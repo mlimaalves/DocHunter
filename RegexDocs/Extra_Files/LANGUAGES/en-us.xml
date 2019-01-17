@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+English (United States)
+-->
+<translation>
+    <item id="btn_search">
+      <text>Search</text>
+    </item>
+	
+	<!--Tabs-->
+	<item id="tab_documentation">
+      <text>Documentation</text>
+    </item>
+	<item id="tab_history">
+      <text>History</text>
+    </item>
+	<item id="tab_errors">
+      <text>Errors</text>
+    </item>
+	
+	<!--Cards-->
+	<item id="crd_todo">
+      <text>To Do List</text>
+    </item>
+	<item id="crd_examples">
+      <text>Examples</text>
+    </item>
+	<item id="crd_params">
+      <text>Function Parameters</text>
+    </item>
+	<item id="crd_return">
+      <text>Function Return</text>
+    </item>
+	<item id="crd_code">
+      <text>Source Code</text>
+    </item>
+	
+	<!--Errors-->
+	<item id="err_commentblock">
+	  <text>
+<![CDATA[
+<span style='font-weight:bold'>ERROR:</span><br>
+The Protheus.doc was not filled or it has errors.<br><br>
+<span style='font-weight:bold'>EXAMPLE:</span><br>
+<span style='font-style:italic'>
+/*/{Protheus.doc}<br>
+@type function<br>
+/*/
+</span>
+]]>
+	  </text>
+	</item>
+	
+	<item id="err_param">
+	  <text>
+<![CDATA[
+<span style='font-weight:bold'>ERROR:</span><br>
+The Parameter <span style='font-style:italic'>@param</span> was not filled correctly. The Name, Type and Description must be separated by ,<br><br>
+<span style='font-weight:bold'>FILLING FORMAT:</span><br>
+Inside the Protheus.Doc: <span style='font-style:italic'>@param param_name, param_type, param_description</span>.
+]]>
+	  </text>
+	</item>
+	
+	<item id="err_paramnotfound">
+	  <text>
+<![CDATA[
+<span style='font-weight:bold'>ERROR:</span><br>
+The Parameter <span style='font-style:italic'>@param</span> was not informed. The Parameter Card will not be filled in the Documentation.<br><br>
+<span style='font-weight:bold'>FILLING FORMAT:</span><br>
+Inside the Protheus.Doc: <span style='font-style:italic'>@param param_name, param_type, param_description</span>.
+]]>
+	  </text>
+	</item>
+	
+	<item id="err_return">
+	  <text>
+<![CDATA[
+<span style='font-weight:bold'>ERROR:</span><br>
+The Parameter <span style='font-style:italic'>@return</span> was not filled correctly. The Name, Type and Description must be separated by ,<br><br>
+<span style='font-weight:bold'>FILLING FORMAT:</span><br>
+Inside the Protheus.Doc: <span style='font-style:italic'>@return return_name, return_type, return_description</span>.
+]]>
+	  </text>
+	</item>
+	<item id="err_returnnotfound">
+	  <text>
+<![CDATA[
+<span style='font-weight:bold'>ERROR:</span><br>
+The Parameter <span style='font-style:italic'>@return</span> was not informed. The Return Card will not be filled in the Documentation.<br><br>
+<span style='font-weight:bold'>FILLING FORMAT:</span><br>
+Inside the Protheus.Doc: <span style='font-style:italic'>@return return_name, return_type, return_description</span>.
+]]>
+	  </text>
+	</item>
+</translation>

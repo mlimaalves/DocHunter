@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<configurations>
+	<service>
+		<servicename></servicename>
+		<displayname></displayname>
+		<servicedescription></servicedescription>
+	</service>
+	<projects>
+		<project nId='1' type='tfvc'>
+			<title>BRLOUTFS - Fareva LOU IT</title>
+			<language>en-us</language>
+			<extension>.prw</extension>
+			<programminglanguage>advpl</programminglanguage>
+			<deletefiles>true</deletefiles>
+			<localfolder>C:\projects\Source-Codes</localfolder>
+			<html>
+				<htmlfolder>C:\Projects\</htmlfolder>
+			</html>
+			<tfvc>
+				<name>TFS - Fareva LOU IT</name>
+				<history>true</history>
+				<serverurl>https://brloutfs.visualstudio.com</serverurl>
+				<networkcredential>
+					<username>brloutfs@fareva.com</username>
+				</networkcredential>
+			</tfvc>
+		</project>
+		<project nId='2' type='local'>
+			<title>BRLOU - SQL Files</title>
+			<language>pt-br</language>
+			<extension>.sql</extension>
+			<programminglanguage>sql</programminglanguage>
+			<deletefiles>true</deletefiles>
+			<localfolder>C:\projects\Source-Codes\SQL</localfolder>
+			<html>
+				<htmlfolder>C:\projects</htmlfolder>
+			</html>
+		</project>
+		<project nId='3' type=''>
+			<title></title>
+			<language></language>
+			<extension></extension>
+			<programminglanguage></programminglanguage>
+			<deletefiles></deletefiles>
+			<localfolder></localfolder>
+			<html>
+				<htmlfolder></htmlfolder>
+			</html>
+		</project>
+		<project nId='4' type=''>
+			<title></title>
+			<language></language>
+			<extension></extension>
+			<programminglanguage></programminglanguage>
+			<deletefiles></deletefiles>
+			<localfolder></localfolder>
+			<html>
+				<htmlfolder></htmlfolder>
+			</html>
+		</project>
+		<project nId='5' type=''>
+			<title></title>
+			<language></language>
+			<extension></extension>
+			<programminglanguage></programminglanguage>
+			<deletefiles></deletefiles>
+			<localfolder></localfolder>
+			<html>
+				<htmlfolder></htmlfolder>
+			</html>
+		</project>
+	</projects>
+</configurations>

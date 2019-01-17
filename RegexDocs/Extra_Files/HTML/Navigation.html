@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang='en'>
+	<head>
+		<meta charset='UTF-8'>
+		<meta http-equiv='X-UA-Compatible' content='IE=edge'>
+		<meta name='view-port' content='width = device-width, initial-scale = '1'>
+		<title>&nameArea&</title>
+		<!-- CSS Bootstrap 4.0 -->
+		<link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css' integrity='sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO' crossorigin='anonymous'>
+
+		<!-- Custom CSS - Murilo -->
+		<link href='&fileProtocolArea&css/custom.css' rel='stylesheet'>
+		
+		
+		
+		<!-- Ícones Fontawesome -->
+		<link rel='stylesheet' href='https://use.fontawesome.com/releases/v5.2.0/css/all.css' integrity='sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ' crossorigin='anonymous'>
+	</head>
+	<body>
+		<nav class='navbar navbar-expand-md navbar-dark bg-dark sticky-top'>
+			<div class='collapse navbar-collapse' id='collapse_target'>
+				<p></p><span class='navbar-text'>&nameArea&</span>
+			</div>
+			<form class='form-inline my-2 my-lg-0'>
+				<input id='myFilter' class='inp form-control mr-sm-2' type='search' placeholder='&Dic:btn_search&' aria-label='Search' autocomplete="off">
+			</form>
+			<ul id='myUL' class='list-group list-group-flush'>
+				<span class='shadow bg-white rounded' style='max-height: 100px; overflow-y: hidden'>
+&searchArea&
+				</span>
+			</ul>
+		</nav>
+		<div id='wrapper'>
+			<div id='page-content-wrapper'>
+				<div class='container-fluid'>
+					<nav aria-label='breadcrumb'>
+						<ol class='breadcrumb'>
+&breadcrumbArea&
+						</ol>
+					</nav>
+					<div class='jumbotron'>
+						<h1 class='display-4'>&nameArea&</h1>
+<div id="treeview1" class="treeview"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script src='https://code.jquery.com/jquery-3.3.1.slim.min.js' integrity='sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo' crossorigin='anonymous'></script>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js' integrity='sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49' crossorigin='anonymous'></script>
+		<script src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js' integrity='sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy' crossorigin='anonymous'></script>
+		<!--Tree view: https://github.com/jonmiles/bootstrap-treeview/blob/develop/src/js/bootstrap-treeview.js -->
+		<script src='&fileProtocolArea&js/jquery.js'></script>
+		<script src='&fileProtocolArea&js/bootstrap-treeview.js'></script>
+		
+		<!--Hide em todos os itens da Searchbar ao carregar a página -->
+		<script>
+		$(document).ready(function() {
+			$('.search-item').each(function() {
+				$(this).hide();
+			});
+		});
+		</script>
+		<!--Highlight os itens filtrados na Searchbar -->
+		<script>
+		$('.inp').keyup(function() {
+			var val = this.value;
+			$('.search-item').each(function() {
+				if (val == "" || $(this).text().toLowerCase().indexOf(val.toLowerCase()) == -1) {
+					$(this).hide();
+				} else {
+					$(this).show();
+					var nn = new RegExp('(' + val + ')', 'gi'),
+						txt = $(this).text();
+					if (val.replace(/\s/g, '') == '') {
+						txt = txt.replace(new RegExp("<span class='highlight'>([\s\S]*?)</span>"), '$1');
+						$(this).html(function(val, html) {
+							return txt.split(',')[0]
+						});
+					} else {
+						txt = txt.replace(nn, "<span class='highlight'>" + '$1' + "</span>");
+						$(this).html(function(val, html) {
+							return txt.split(',')[0]
+						});
+					}
+				}
+			})
+		})
+		</script>
+		
+		<!-- Criação da árvore de arquivos e pastas -->
+		<script type="text/javascript">
+  		$(function() {
+			var defaultData = [
+	&treeArea&
+		   
+			$('#treeview1').treeview({
+			  expandIcon: "fas fa-folder",
+			  collapseIcon: "fas fa-folder-open",
+			  showBorder: false,
+			  enableLinks: true,
+			  data: defaultData
+			});
+  		});
+  	</script>
+	</body>
+</html>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Brazilian Portuguese
+-->
+<translation>
+    <item id="btn_search">
+      <text>Procurar</text>
+    </item>
+	
+	<!--Tabs-->
+	<item id="tab_documentation">
+      <text>Documentação</text>
+    </item>
+	<item id="tab_changesets">
+      <text>Histórico</text>
+    </item>
+	<item id="tab_errors">
+      <text>Erros</text>
+    </item>
+	
+	<!--Cards-->
+	<item id="crd_todo">
+      <text>Tarefas Pendentes</text>
+    </item>
+	<item id="crd_examples">
+      <text>Exemplos</text>
+    </item>
+	<item id="crd_params">
+      <text>Parâmetros da Função</text>
+    </item>
+	<item id="crd_return">
+      <text>Retorno da Função</text>
+    </item>
+	<item id="crd_code">
+      <text>Código-Fonte</text>
+    </item>
+	
+	<!--Errors-->
+	<item id="err_commentblock">
+	  <text>
+<![CDATA[
+<span style='font-weight:bold'>ERRO:</span><br>
+A estrutura Protheus.doc não foi informada ou possui erros.<br><br>
+<span style='font-weight:bold'>EXEMPLO:</span><br>
+<span style='font-style:italic'>
+/*/{Protheus.doc}<br>
+@type function<br>
+/*/
+</span>
+]]>
+	  </text>
+	</item>
+	
+	<item id="err_param">
+	  <text>
+<![CDATA[
+<span style='font-weight:bold'>ERRO:</span><br>
+O Parâmetro <span style='font-style:italic'>@param</span> não preenchido corretamente. O nome, tipo e descrição deve estar separado por ,<br><br>
+<span style='font-weight:bold'>FORMATO DE PREENCHIMENTO:</span><br>
+Dentro do Protheus.Doc: <span style='font-style:italic'>@param param_name, param_type, param_description</span>.
+]]>
+	  </text>
+	</item>
+	<item id="err_paramnotfound">
+	  <text>
+<![CDATA[
+<span style='font-weight:bold'>ERRO:</span><br>
+O Parâmetro <span style='font-style:italic'>@param</span> não foi informado. O Card de Parâmetros não será preenchido na documentação.<br><br>
+<span style='font-weight:bold'>FORMATO DE PREENCHIMENTO:</span><br>
+Dentro do Protheus.Doc: <span style='font-style:italic'>@param param_name, param_type, param_description</span>.
+]]>
+	  </text>
+	</item>
+	
+	<item id="err_return">
+	  <text>
+<![CDATA[
+<span style='font-weight:bold'>ERRO:</span><br>
+O Parâmetro <span style='font-style:italic'>@return</span> não preenchido corretamente. O nome, tipo e descrição deve estar separado por ,<br><br>
+<span style='font-weight:bold'>FORMATO DE PREENCHIMENTO:</span><br>
+Dentro do Protheus.Doc: <span style='font-style:italic'>@return return_name, return_type, return_description</span>.
+]]>
+	  </text>
+	</item>
+	<item id="err_returnnotfound">
+	  <text>
+<![CDATA[
+<span style='font-weight:bold'>ERRO:</span><br>
+O Parâmetro <span style='font-style:italic'>@return</span> não foi informado. O Card de Retorno não será preenchido na documentação.<br><br>
+<span style='font-weight:bold'>FORMATO DE PREENCHIMENTO:</span><br>
+Dentro do Protheus.Doc: <span style='font-style:italic'>@return return_name, return_type, return_description</span>.
+]]>
+	  </text>
+	</item>
+</translation>

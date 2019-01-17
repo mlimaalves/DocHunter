@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<regex>
+    <item id="commentblock">
+		<text>\/\*\/.*{Protheus\.doc}.*\/\*\/</text>
+    </item>
+
+	<item id="parameters">
+		<text>@param.*</text>
+    </item>
+	
+	<item id="return">
+		<text>@return.*</text>
+    </item>
+	
+	<item id="examples">
+		<text>@example.*</text>
+    </item>
+	
+	<item id="observations">
+		<text>@obs.*</text>
+    </item>
+	
+	<item id="todo">
+		<text>@todo.*</text>
+    </item>
+</regex>

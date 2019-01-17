@@ -15,11 +15,11 @@ namespace RegexDocs
             //set the privileges
             processInstaller.Account = ServiceAccount.LocalSystem;
 
-            serviceInstaller.DisplayName = "_Console_WSA";
+            serviceInstaller.DisplayName = "_RegexDocs";
             serviceInstaller.StartType = ServiceStartMode.Automatic;
 
             //must be the same as what was set in Program's constructor
-            serviceInstaller.ServiceName = "_Console_WSA";
+            serviceInstaller.ServiceName = "_RegexDocs";
             Installers.Add(processInstaller);
             Installers.Add(serviceInstaller);
         }

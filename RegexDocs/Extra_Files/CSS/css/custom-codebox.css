@@ -1,0 +1,33 @@
+.codebox.linenumber{
+	pointer-events:none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select:none;
+	user-select:none;
+	-o-user-select:none;
+	border-right-style:solid;
+	border-right-color:gray;
+	border-right-width:1px;
+	background-color:#f8f8f8;
+	padding-left:30px;
+	padding-right:10px;
+	text-color:gray;
+	font-size:13px;
+	vertical-align:top;
+}
+.codebox-panel {
+	height:250px;
+	overflow:auto;
+	overflow-x:scroll;
+	resize:vertical;
+}
+pre{
+	font-family:"Courier New", Courier, monospace;
+	white-space:pre-wrap;
+	word-wrap:break-word;
+	text-align:justify;
+	margin: 0;
+    padding: 0;
+    border: 0;
+	font-size:12px;
+}
