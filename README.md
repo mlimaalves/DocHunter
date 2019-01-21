@@ -2,7 +2,7 @@ RegexDocs - A free code tool optimized for creating documentation standards
 =============================================================
 
 # What is RegexDocs?
-RegexDocs is a free program for Microsoft Windows. It was developed by Murilo Lima Alves (mlima.louveira@icloud.com) and published under GNU General Public License v3.0 (GNU GPLv3).
+RegexDocs is a free program for Microsoft Windows. It was developed by [Murilo Lima Alves (mlima.louveira@icloud.com)](https://github.com/mlimaalves) and published under GNU General Public License v3.0 (GNU GPLv3).
 By December 2018, RegexDocs final files were available for the following languages:
 * pt-BR (Portuguese - Brazil).
 * en-US (English - United States).
