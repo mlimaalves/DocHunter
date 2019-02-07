@@ -27,7 +27,7 @@ namespace RegexDocs.SQLite
 
         private static SQLiteConnection DbConnection()
         {
-            sqliteConnection = new SQLiteConnection("Data Source=" + dbSource + "; Version=3;");
+            sqliteConnection = new SQLiteConnection("Data Source=" + dbSource + "; Version=3;", true);
             sqliteConnection.Open();
             return sqliteConnection;
         }

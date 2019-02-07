@@ -557,13 +557,17 @@ namespace RegexDocs.HTML
             Replace_ErrorArea(htmlfile);
         }
 
-        private string RemoveRegexItemText(string pattern, string Text)
+        private string RemoveRegexItemText(string patterns, string Text)
         {
-            var regexPattern = pattern + @"?(?=[\[|@|!|#|\]|A-Za-z|1-9])";
-            var regex = new Regex(regexPattern, RegexOptions.Singleline);
-            var match = regex.Match(Text);
-            if (match.Success) return Text.Replace(match.Value, "");
-            else return Text;
+            var loop = patterns.Split('|');
+            foreach (string pattern in loop)
+            {
+                var regexPattern = pattern + @"?(?=[\[|@|!|#|\]|A-Za-z|1-9])";
+                var regex = new Regex(regexPattern, RegexOptions.Singleline);
+                var match = regex.Match(Text);
+                if (match.Success) return Text.Replace(match.Value, "");
+            }
+            return "";
         }
 
         private void SetParam(string file, List<string[]> param)
