@@ -12,7 +12,7 @@ namespace RegexDocs.HTML
         public static string URLReplace(string s)
         {
             string sret = s;
-            sret = sret.ToLower().Replace(" ", "_").Replace(",", "_").Replace(".", "_").Replace("/", "").Replace("@", "_");
+            sret = sret.ToLower().Replace(" ", "_").Replace(",", "_").Replace(".", "_").Replace("/", "").Replace("@", "_").Replace("'", "_");
             return sret;
         }
         public static string StringReplace(string s)

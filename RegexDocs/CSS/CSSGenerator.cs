@@ -43,13 +43,13 @@ namespace RegexDocs.CSS
             Directory.CreateDirectory(target.FullName);
 
             // Copy each file into the new directory.
-            foreach (FileInfo fi in source.GetFiles())
+            foreach (FileInfo fi in source.EnumerateFiles())
             {
                 fi.CopyTo(Path.Combine(target.FullName, fi.Name), true);
             }
 
             // Copy each subdirectory using recursion.
-            foreach (DirectoryInfo diSourceSubDir in source.GetDirectories())
+            foreach (DirectoryInfo diSourceSubDir in source.EnumerateDirectories())
             {
                 DirectoryInfo nextTargetSubDir =
                     target.CreateSubdirectory(diSourceSubDir.Name);

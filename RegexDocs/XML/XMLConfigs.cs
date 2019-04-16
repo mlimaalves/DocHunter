@@ -38,7 +38,7 @@
             public string LocalFolder { get; set; }
             public string DeleteFiles { get; set; }
             public string Language { get; set; }
-            public string Extension { get; set; }
+            public string[] Extensions { get; set; }
             public string ProgrammingLanguage { get; set; }
             //
 
@@ -72,8 +72,8 @@
                 DeleteFiles = (DeleteFiles == "") ? "false" : DeleteFiles;
                 Language =
                     XmlOperations.GetXmlElements(projectelement + nId + "']/language", true).ToLower();
-                Extension =
-                    XmlOperations.GetXmlElements(projectelement + nId + "']/extension", true).ToLower();
+                Extensions =
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/extension", true).ToLower().Split('|');
                 ProgrammingLanguage =
                     XmlOperations.GetXmlElements(projectelement + nId + "']/programminglanguage", true).ToLower();
             }
@@ -93,8 +93,8 @@
                 DeleteFiles = (DeleteFiles == "") ? "false" : DeleteFiles;
                 Language =
                     XmlOperations.GetXmlElements(projectelement + nId + "']/language", true).ToLower();
-                Extension =
-                    XmlOperations.GetXmlElements(projectelement + nId + "']/extension", true).ToLower();
+                Extensions =
+                    XmlOperations.GetXmlElements(projectelement + nId + "']/extension", true).ToLower().Split('|');
                 ProgrammingLanguage =
                     XmlOperations.GetXmlElements(projectelement + nId + "']/programminglanguage", true).ToLower();
             }

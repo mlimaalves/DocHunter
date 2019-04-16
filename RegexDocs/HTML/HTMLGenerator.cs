@@ -25,6 +25,8 @@ namespace RegexDocs.HTML
         private string CodeErrorList = "";
         private string searchList = "";
         private string searchFolder = "";
+        private string[] avoidExtensions = new[] { ".git", ".svn", ".vscode" };
+
         public void LoadXml(XmlConfigs.Xml xml) => this.Xml = xml;
 
         public bool Start()
@@ -91,21 +93,23 @@ namespace RegexDocs.HTML
             Replace_BreadcrumbArea(htmlfile, htmlfile);
             Replace_Dictionary(htmlfile);
 
-            Logging.WriteLog("main.html file created successfully. Generating the " + Xml.Extension + " documentation.");
+            Logging.WriteLog("main.html file created successfully. Generating the documentation.");
             #endregion
 
             #region CRIANDO ARQUIVOS CODE
             var tfsFolder = new DirectoryInfo(Xml.LocalFolder);
-            var counter = tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Length;
+            var counter = tfsFolder.EnumerateFiles("*", SearchOption.AllDirectories).Count(d => Xml.Extensions.Contains(d.Extension.ToLower()));
             var current = 0;
 
-            foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories)
-                .Where(d => !d.FullName.ToString().Contains(".vscode")))
+            foreach (var codefile in tfsFolder.EnumerateFiles("*", SearchOption.AllDirectories)
+                .Where(d => Xml.Extensions.Contains(d.Extension.ToLower())))
             {
                 current++;
                 Logging.WriteLog(current + " of " + counter + " files processed.", true);
                 var originalfilename = codefile.FullName;
-                var newdirectory = WebUtility.HtmlEncode(codefile.Directory.FullName);
+                //var newdirectory = WebUtility.HtmlEncode(codefile.Directory.FullName);
+                var newdirectory = HtmlFormatters.URLReplace(codefile.Directory.FullName);
+                newdirectory = (newdirectory.Substring(newdirectory.Length - 1) == @"\") ? newdirectory : newdirectory + @"\";
                 newdirectory = htmlFolder + @"\" + HtmlFormatters.URLReplace(newdirectory.Replace(Xml.LocalFolder, ""));
                 Directory.CreateDirectory(newdirectory);
 
@@ -165,8 +169,8 @@ namespace RegexDocs.HTML
             var buttonCollapseList = "";
             var f = new FileInfo(mainfile);
 
-            foreach (var directory in currentFolder.GetDirectories("*.*", SearchOption.TopDirectoryOnly)
-                .Where(d => !d.FullName.ToString().Contains(".vscode")))
+            foreach (var directory in currentFolder.EnumerateDirectories("*", SearchOption.TopDirectoryOnly)
+                .Where(d => Xml.Extensions.Contains(d.Extension.ToLower())))
             {
                 var identifier = directory.Name;
                 identifier = HtmlFormatters.URLReplace(identifier);
@@ -187,7 +191,7 @@ namespace RegexDocs.HTML
                 buttonCollapseList += "							<ul class='list-group'>" + Environment.NewLine;
 
                 var innerFolder = new DirectoryInfo(directory.FullName);
-                foreach (var subdirectories in innerFolder.GetDirectories("*.*", SearchOption.TopDirectoryOnly))
+                foreach (var subdirectories in innerFolder.EnumerateDirectories("*.*", SearchOption.TopDirectoryOnly))
                 {
                     var subText = WebUtility.HtmlEncode(subdirectories.Name);
 
@@ -199,7 +203,7 @@ namespace RegexDocs.HTML
                                           "<i class='far fa-folder fa-custom'></i>" +
                                           subText + "</a></li>" + Environment.NewLine;
                 }
-                foreach (var subfiles in innerFolder.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly))
+                foreach (var subfiles in innerFolder.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Where(d => Xml.Extensions.Contains(d.Extension.ToLower())))
                 {
                     var subText = WebUtility.HtmlEncode(subfiles.Name);
 
@@ -221,8 +225,8 @@ namespace RegexDocs.HTML
 
             #region loop em ARQUIVOS- Gera uma tag <a> para cada arquivo encontrado
 
-            foreach (var codefile in currentFolder.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
-                .Where(d => !d.FullName.ToString().Contains(".vscode")))
+            foreach (var codefile in currentFolder.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
+                .Where(d => Xml.Extensions.Contains(d.Extension.ToLower())))
             {
                 var href = codefile.Name;
                 href = HtmlFormatters.URLReplace(href) + ".html";
@@ -261,7 +265,7 @@ namespace RegexDocs.HTML
                 if (f.Name != "main.html" && x == 0)
                 {
                     var goback = string.Concat(Enumerable.Repeat("../", folderSplit.Length - 2));
-                    var href = currentpath.Replace(HtmlFormatters.URLReplace(Xml.LocalFolder), "") +
+                    var href = currentpath.Replace(HtmlFormatters.URLReplace(Xml.LocalFolder + @"\"), "") +
                                ((folderSplit[x] == "") ? "main" : folderSplit[x]);
                     href = goback + HtmlFormatters.URLReplace(href) + ".html";
                     breadcrumbText += "							<li " +
@@ -308,8 +312,9 @@ namespace RegexDocs.HTML
                         var Datetime = row["creationdate"];
 
                         currcs += "								<li class='list-group-item'>" + Environment.NewLine; // Creates a new history group
+                        var tempDT = DateTime.Parse(row["creationdate"].ToString(), new System.Globalization.CultureInfo(Xml.Language));
                         currcs += "									<div class='text-muted font-weight-bold'>" +
-                           currdatetime.ToString("dddd, dd/MMM/yyyy", new System.Globalization.CultureInfo(Xml.Language)) + ", " + currdatetime.ToString("hh:mm:ss") + "</div>" + Environment.NewLine;
+                           tempDT.ToString("dddd, dd/MMM/yyyy", new System.Globalization.CultureInfo(Xml.Language)) + ", " + tempDT.ToString("hh:mm:ss") + "</div>" + Environment.NewLine;
                         currcs += "<p></p>" + Environment.NewLine;
                         currcs += "									<div class='custom-history'>" + Environment.NewLine;
                         currcs += "										<h6 " +
@@ -340,7 +345,7 @@ namespace RegexDocs.HTML
             {
                 searchList = "";
                 searchFolder = newFolder.ToLower();
-                foreach (var codefile in tfsFolder.GetFiles("*" + Xml.Extension, SearchOption.AllDirectories).Where(d => !d.FullName.ToString().Contains(".vscode")))
+                foreach (var codefile in tfsFolder.EnumerateFiles("*", SearchOption.AllDirectories).Where(d => Xml.Extensions.Contains(d.Extension.ToLower())))
                 {
                     var searchText = WebUtility.HtmlEncode(Xml.ProjectTitle + @"\" + codefile.FullName.Replace(Xml.LocalFolder, ""));
                     var replace = HtmlFormatters.URLReplace(Xml.HtmlFolder + Xml.ProjectTitle);
@@ -668,17 +673,13 @@ namespace RegexDocs.HTML
         {
             var folder = new DirectoryInfo(file);
             recursivelevel++; // Somente para checar o nível da recursividade da função
-
-            if (folder.GetDirectories("*", SearchOption.TopDirectoryOnly)
-                .Any(d => !d.FullName.ToString().Contains(".vscode")))
-            {
-                foreach (var directory in folder.GetDirectories("*", SearchOption.TopDirectoryOnly)
-                    .Where(d => !d.FullName.ToString().Contains(".vscode")))
+            
+                foreach (var directory in folder.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Where(d => !d.FullName.ToString().Contains(".vscode") && !d.FullName.ToString().Contains(".git") && !d.FullName.ToString().Contains(".svn")))
                 {
                     Tree += "{";
-                    Tree += "text:'" + directory.Name + "'";
+                    Tree += @"text:""" + directory.Name + @"""";
                     var dInfo = new DirectoryInfo(directory.FullName);
-                    if (dInfo.GetDirectories("*", SearchOption.TopDirectoryOnly).Count(d => !d.FullName.ToString().Contains(".vscode")) != 0)
+                    if (dInfo.EnumerateDirectories("*", SearchOption.TopDirectoryOnly).Count() != 0)
                     {
                         Tree += ",nodes:[";
                         Create_Tree(directory.FullName, recursivelevel);
@@ -687,31 +688,31 @@ namespace RegexDocs.HTML
                     else
                     {
                         Tree += ",nodes:[";
-                        foreach (var codefile in dInfo.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
-                            .Where(d => !d.FullName.ToString().Contains(".vscode")))
+                        foreach (var codefile in dInfo.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
+                            .Where(d => Xml.Extensions.Contains(d.Extension.ToLower())))
                         {
                             var href = codefile.FullName.Replace(Xml.LocalFolder, "");
                             href = @".\" + HtmlFormatters.URLReplace(href) + ".html";
                             Tree += "{";
-                            Tree += "text:'" + codefile.Name + "',";
+                            Tree += @"text:""" + codefile.Name + @""",";
                             Tree += "icon:'far fa-file',";
-                            Tree += "href:'" + href.Replace(@"\", @"/") + "'},";
+                            Tree += @"href:""" + href.Replace(@"\", @"/") + @"""},";
                         }
                         Tree += "]},";
                     }
                 }
-                foreach (var codefile in folder.GetFiles("*" + Xml.Extension, SearchOption.TopDirectoryOnly)
-                    .Where(d => !d.FullName.ToString().Contains(".vscode")))
+                foreach (var codefile in folder.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
+                    .Where(d => Xml.Extensions.Contains(d.Extension.ToLower())))
                 {
                     var href = codefile.FullName.Replace(Xml.LocalFolder, "");
                     href = @".\" + HtmlFormatters.URLReplace(href) + ".html";
                     Tree += "{";
-                    Tree += "text:'" + codefile.Name + "',";
+                    Tree += @"text:""" + codefile.Name + @""",";
                     Tree += "icon:'far fa-file',";
-                    Tree += "href:'" + href.Replace(@"\", @"/") + "'},";
+                    Tree += @"href:""" + href.Replace(@"\", @"/") + @"""},";
                 }
                 Tree += "],";
-            }
+           // }
             Tree += "},";
         }
 
