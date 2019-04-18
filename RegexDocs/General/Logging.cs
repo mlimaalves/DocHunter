@@ -15,7 +15,7 @@ namespace RegexDocs.General
         public static void WriteLog(string texto, bool carriage = false)
         {
             var now = DateTime.Now;
-            var date = "[" + now.ToString("MM/dd/yyyy") + " - " + now.ToString("HH:mm:ss") + "] ";
+            var date = "[" + now.ToString("MM/dd/yyyy") + " - " + now.ToString("H:mm:ss") + "] ";
 
             try
             {

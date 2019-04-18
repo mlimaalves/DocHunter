@@ -314,7 +314,7 @@ namespace RegexDocs.HTML
                         currcs += "								<li class='list-group-item'>" + Environment.NewLine; // Creates a new history group
                         var tempDT = DateTime.Parse(row["creationdate"].ToString(), new System.Globalization.CultureInfo(Xml.Language));
                         currcs += "									<div class='text-muted font-weight-bold'>" +
-                           tempDT.ToString("dddd, dd/MMM/yyyy", new System.Globalization.CultureInfo(Xml.Language)) + ", " + tempDT.ToString("hh:mm:ss") + "</div>" + Environment.NewLine;
+                           tempDT.ToString("dddd, dd/MMM/yyyy", new System.Globalization.CultureInfo(Xml.Language)) + ", " + tempDT.ToString("H:mm:ss") + "</div>" + Environment.NewLine;
                         currcs += "<p></p>" + Environment.NewLine;
                         currcs += "									<div class='custom-history'>" + Environment.NewLine;
                         currcs += "										<h6 " +
