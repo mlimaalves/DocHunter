@@ -325,7 +325,7 @@ namespace RegexDocs.HTML
 
                         currcs = currcs.Replace("&newComment&", row["comment"].ToString());
                         currcs += "										<div class='text-muted font-weight-normal'>" +
-                           "Changeset " + row["id"].ToString() + ", " + row["creator"].ToString() + "</div>" + Environment.NewLine;
+                           "Changeset ID: " + row["id"].ToString() + ", " + row["creator"].ToString() + "</div>" + Environment.NewLine;
                         currcs += "										</h6>" + Environment.NewLine;
                         currcs += "									</div>" + Environment.NewLine; // History group end
                         currcs += "								</li>";

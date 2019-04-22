@@ -189,7 +189,7 @@ namespace RegexDocs.TFS
                                             File = targetFile.ToLower().Replace("/", "\\"),
                                             Id = changeset.ChangesetId,
                                             CreationDate = changeset.CreationDate,
-                                            Creator = changeset.CommitterDisplayName,
+                                            Creator = "Commiter: " + changeset.CommitterDisplayName,
                                             Comment = changeset.Comment
                                         };
 
