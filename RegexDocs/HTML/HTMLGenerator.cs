@@ -503,7 +503,7 @@ namespace RegexDocs.HTML
                     var errormsg = "";
                     errormsg = "&Dic:err_paramnotfound&";
 
-                    FeedError("warning", errormsg);
+                    FeedError("info", errormsg);
                 }
 
                 #endregion
@@ -554,7 +554,7 @@ namespace RegexDocs.HTML
                     var errormsg = "";
                     errormsg = "&Dic:err_returnnotfound&";
 
-                    FeedError("warning", errormsg);
+                    FeedError("info", errormsg);
                 }
                 #endregion
             }
@@ -580,17 +580,17 @@ namespace RegexDocs.HTML
         private void PrepareErrorList(string htmlfile)
         {
             var danger = 0;
-            var warning = 0;
+            var info = 0;
             var errorCSVFile = "";
             ErrorBadgeList = "";
             foreach (Error err in errors)
             {
                 if (err.type == "danger") danger++;
-                else warning++;
+                else info++;
                 errorCSVFile += Xml.ProjectTitle + ";" + htmlfile + ';' + err.type + ';' + err.message.Replace(";", "").Replace(",","")+"\r\n" ;
             }
             if(danger > 0) ErrorBadgeList += "<span class='badge badge-danger'>" + danger.ToString() + "</span>";
-            if (warning > 0)ErrorBadgeList += "<span class='badge badge-info'>" + warning.ToString() + "</span>";
+            if (info > 0)ErrorBadgeList += "<span class='badge badge-info'>" + info.ToString() + "</span>";
 
             if (!File.Exists(Errorfile)) File.WriteAllText(Errorfile, errorCSVFile);
             else File.AppendAllText(Errorfile, errorCSVFile);
