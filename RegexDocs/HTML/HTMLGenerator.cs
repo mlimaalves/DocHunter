@@ -21,8 +21,16 @@ namespace RegexDocs.HTML
         private static FileHash FileHash = new FileHash();
         private XmlConfigs.Xml Xml { get; set; } = new XmlConfigs.Xml();
         private static readonly string Assemblyfolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + @"\";
+        private static readonly string Errorfile = Assemblyfolder + "errorList.csv";
         private string Tree = "";
         private string CodeErrorList = "";
+        private string ErrorBadgeList = "";
+        private class Error
+        {
+            public string type { get; set; }
+            public string message { get; set; }
+        }
+        List<Error> errors = new List<Error>();
         private string searchList = "";
         private string searchFolder = "";
         private string[] avoidExtensions = new[] { ".git", ".svn", ".vscode" };
@@ -34,6 +42,10 @@ namespace RegexDocs.HTML
             var lret = false;
             try
             {
+                Logging.WriteLog("Cleaning older errorList.csv files...");
+                var errFileColumns = "PROJECT TITLE; HTML FILE NAME; ERROR TYPE; ERROR DICTIONARY MESSAGE\r\n";
+                if (File.Exists(Errorfile)) File.Delete(Errorfile);
+                File.AppendAllText(Errorfile, errFileColumns);
                 Logging.WriteLog("Starting the HTML files creation...");
                 CreateDocumentation();
                 Logging.WriteLog("HTML Files Creation Status: CONCLUDED.");
@@ -385,6 +397,8 @@ namespace RegexDocs.HTML
 
         private void Replace_ErrorArea(string file) => File.WriteAllText(file, File.ReadAllText(file).Replace("&ErrorArea&", CodeErrorList));
 
+        private void Replace_ErrorBadgeArea(string file) => File.WriteAllText(file, File.ReadAllText(file).Replace("&errBadgeArea&", ErrorBadgeList));
+
         private void RegExCode(string htmlfile, string codefile)
         {
             var fullcode = HtmlFormatters.StringReplace(File.ReadAllText(codefile, Encoding.GetEncoding("Windows-1252")));
@@ -489,7 +503,7 @@ namespace RegexDocs.HTML
                     var errormsg = "";
                     errormsg = "&Dic:err_paramnotfound&";
 
-                    FeedError("danger", errormsg);
+                    FeedError("warning", errormsg);
                 }
 
                 #endregion
@@ -540,7 +554,7 @@ namespace RegexDocs.HTML
                     var errormsg = "";
                     errormsg = "&Dic:err_returnnotfound&";
 
-                    FeedError("danger", errormsg);
+                    FeedError("warning", errormsg);
                 }
                 #endregion
             }
@@ -558,8 +572,30 @@ namespace RegexDocs.HTML
             SetReturn(htmlfile, returnvar);
             SetToDo(htmlfile, todolist);
             #endregion
-
+            PrepareErrorList(htmlfile);
             Replace_ErrorArea(htmlfile);
+            Replace_ErrorBadgeArea(htmlfile);
+        }
+
+        private void PrepareErrorList(string htmlfile)
+        {
+            var danger = 0;
+            var warning = 0;
+            var errorCSVFile = "";
+            ErrorBadgeList = "";
+            foreach (Error err in errors)
+            {
+                if (err.type == "danger") danger++;
+                else warning++;
+                errorCSVFile += Xml.ProjectTitle + ";" + htmlfile + ';' + err.type + ';' + err.message.Replace(";", "").Replace(",","")+"\r\n" ;
+            }
+            if(danger > 0) ErrorBadgeList += "<span class='badge badge-danger'>" + danger.ToString() + "</span>";
+            if (warning > 0)ErrorBadgeList += "<span class='badge badge-info'>" + warning.ToString() + "</span>";
+
+            if (!File.Exists(Errorfile)) File.WriteAllText(Errorfile, errorCSVFile);
+            else File.AppendAllText(Errorfile, errorCSVFile);
+
+            errors = new List<Error>();
         }
 
         private string RemoveRegexItemText(string patterns, string Text)
@@ -722,6 +758,11 @@ namespace RegexDocs.HTML
                       "class='alert alert-" + CSSclass + "' role='alert'>" + Environment.NewLine +
                       message + Environment.NewLine +
                       "						</div>" + Environment.NewLine;
+            Error _error = new Error();
+            _error.type = CSSclass;
+            _error.message = message;
+
+            errors.Add(_error);
         }
     }
 }
